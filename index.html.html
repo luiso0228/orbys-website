@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbys — Business OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#09090e;
+  --s1:#0e0e16;
+  --s2:#13131e;
+  --bd:rgba(255,255,255,0.07);
+  --bd2:rgba(255,255,255,0.11);
+  --tx:#eeedf3;
+  --mu:rgba(255,255,255,0.4);
+  --mu2:rgba(255,255,255,0.22);
+  --ac:#6c63ff;
+  --ac2:#2dd4bf;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.65;overflow-x:hidden}
+
+/* LANG */
+.lang{position:fixed;top:20px;right:24px;z-index:400;display:flex;gap:4px}
+.lb{padding:4px 12px;border-radius:100px;border:1px solid var(--bd2);background:rgba(9,9,14,0.7);backdrop-filter:blur(16px);color:var(--mu);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;letter-spacing:.05em}
+.lb:hover{color:var(--tx);border-color:rgba(255,255,255,.18)}
+.lb.on{background:var(--ac);border-color:transparent;color:#fff}
+.slide{display:none}.slide.on{display:block}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(9,9,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd)}
+.nlogo{display:flex;align-items:center;gap:8px;cursor:pointer}
+.nlogo svg{width:24px;height:24px;flex-shrink:0}
+.nlogt{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.3px;color:var(--tx)}
+.nlogt em{font-style:normal;font-weight:400;color:var(--mu2);font-size:13px;margin-left:2px}
+.nlinks{display:flex;align-items:center;gap:28px}
+.nl{font-size:13px;color:var(--mu);cursor:pointer;transition:color .15s}
+.nl:hover{color:var(--tx)}
+.ncta{padding:7px 16px;border-radius:7px;background:var(--ac);color:#fff;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.ncta:hover{background:#7a72ff}
+@media(max-width:660px){.nlinks .nl{display:none}.lang{top:14px;right:14px}}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px;position:relative;overflow:hidden}
+.hbg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 40% at 50% 10%,rgba(108,99,255,.09),transparent 65%);pointer-events:none}
+.hbg2{position:absolute;inset:0;background:radial-gradient(ellipse 35% 25% at 75% 65%,rgba(45,212,191,.05),transparent 60%);pointer-events:none}
+.hbadge{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:100px;border:1px solid var(--bd2);background:rgba(255,255,255,.03);color:var(--mu);font-size:11px;letter-spacing:.09em;text-transform:uppercase;margin-bottom:32px}
+.hdot{width:5px;height:5px;border-radius:50%;background:var(--ac2);animation:blink 2.2s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.hh1{font-family:'Syne',sans-serif;font-size:clamp(30px,5vw,56px);font-weight:700;line-height:1.1;letter-spacing:-1.4px;margin-bottom:18px;max-width:740px}
+.hh1 .g{background:linear-gradient(125deg,#fff 25%,rgba(108,99,255,.95) 65%,rgba(45,212,191,.9) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hp{font-size:15px;color:var(--mu);line-height:1.8;max-width:480px;margin-bottom:40px;font-weight:300}
+.hbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.bp{padding:10px 24px;border-radius:7px;background:var(--ac);color:#fff;font-size:14px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s}
+.bp:hover{background:#7a72ff}
+.bs{padding:10px 24px;border-radius:7px;background:transparent;color:var(--mu);font-size:14px;border:1px solid var(--bd2);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.bs:hover{border-color:rgba(255,255,255,.2);color:var(--tx)}
+.hmeta{margin-top:64px;display:flex;gap:36px;flex-wrap:wrap;justify-content:center}
+.hmi{font-size:11px;color:var(--mu2);letter-spacing:.05em;text-transform:uppercase}
+
+/* SECTIONS */
+.sec{padding:88px 24px;max-width:1020px;margin:0 auto}
+.slabel{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac2);margin-bottom:11px;opacity:.85}
+.sh{font-family:'Syne',sans-serif;font-size:clamp(22px,3.2vw,36px);font-weight:700;line-height:1.2;letter-spacing:-.7px;margin-bottom:13px}
+.sh .g{background:linear-gradient(120deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sp{font-size:14px;color:var(--mu);line-height:1.8;max-width:500px;font-weight:300}
+.hr{height:1px;background:linear-gradient(90deg,transparent,var(--bd2) 30%,var(--bd2) 70%,transparent)}
+
+/* VISION GRID */
+.vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-top:48px}
+.vc{background:var(--bg);padding:26px 22px;transition:background .18s}
+.vc:hover{background:var(--s1)}
+.vi{font-size:19px;margin-bottom:14px;display:block}
+.vt{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;margin-bottom:7px}
+.vd{font-size:12px;color:var(--mu);line-height:1.65}
+
+/* AGENTS */
+.aw{background:var(--s1);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:72px 24px}
+.ai{max-width:1020px;margin:0 auto}
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:44px}
+.ac{border:1px solid var(--bd);border-radius:11px;padding:16px 10px;text-align:center;transition:all .18s;background:var(--bg)}
+.ac:hover{border-color:rgba(108,99,255,.28);background:rgba(108,99,255,.04);transform:translateY(-2px)}
+.ae{font-size:20px;margin-bottom:7px;display:block}
+.an{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--tx)}
+.ar{font-size:10px;color:var(--mu2);margin-top:3px}
+
+/* STEPS */
+.steps{margin-top:48px;border:1px solid var(--bd);border-radius:14px;overflow:hidden}
+.step{display:flex;gap:18px;padding:22px 26px;border-bottom:1px solid var(--bd);transition:background .15s;align-items:flex-start}
+.step:last-child{border-bottom:none}
+.step:hover{background:var(--s1)}
+.sn{width:30px;height:30px;border-radius:50%;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:600;font-size:12px;color:var(--mu);flex-shrink:0;margin-top:2px}
+.st{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;margin-bottom:5px}
+.sd{font-size:12px;color:var(--mu);line-height:1.65}
+
+/* STATS */
+.sw{background:var(--s1);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:72px 24px}
+.si{max-width:1020px;margin:0 auto}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:14px;overflow:hidden;margin-top:44px}
+.st2{background:var(--s1);padding:28px 22px;text-align:center}
+.sv{font-family:'Syne',sans-serif;font-weight:700;font-size:32px;letter-spacing:-1px;background:linear-gradient(120deg,var(--ac),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.sl{font-size:11px;color:var(--mu);margin-top:7px;line-height:1.5}
+
+/* DEMO */
+.dw{padding:88px 24px}
+.di{max-width:480px;margin:0 auto;text-align:center}
+.dbox{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:32px 28px;margin-top:36px;text-align:left}
+.dbt{font-family:'Syne',sans-serif;font-weight:600;font-size:15px;margin-bottom:6px}
+.dbd{font-size:12px;color:var(--mu);line-height:1.65;margin-bottom:22px}
+.form{display:flex;flex-direction:column;gap:9px}
+.inp{background:var(--s2);border:1px solid var(--bd2);border-radius:7px;padding:10px 13px;color:var(--tx);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%}
+.inp:focus{border-color:rgba(108,99,255,.45)}
+.inp::placeholder{color:rgba(255,255,255,.18)}
+.fbtn{padding:11px;border-radius:7px;background:var(--ac);color:#fff;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .15s;width:100%}
+.fbtn:hover{background:#7a72ff}
+.fnote{font-size:11px;color:var(--mu2);text-align:center;margin-top:7px;letter-spacing:.02em}
+
+/* PRICING */
+.pw{background:var(--s1);border-top:1px solid var(--bd);padding:88px 24px}
+.pi{max-width:1020px;margin:0 auto}
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:48px}
+.pc{background:var(--bg);border:1px solid var(--bd);border-radius:14px;padding:26px;transition:border-color .2s}
+.pc.hot{border-color:rgba(108,99,255,.28)}
+.pb2{display:inline-block;font-size:10px;padding:3px 10px;border-radius:100px;background:rgba(108,99,255,.11);color:var(--ac);font-weight:500;margin-bottom:12px;letter-spacing:.06em;text-transform:uppercase}
+.pn{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:5px}
+.pp{font-family:'Syne',sans-serif;font-weight:700;font-size:30px;letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.pper{font-size:11px;color:var(--mu);margin-bottom:20px}
+.pfs{display:flex;flex-direction:column;gap:7px;margin-bottom:22px}
+.pf{font-size:12px;color:var(--mu);display:flex;align-items:center;gap:7px}
+.pf::before{content:'—';color:var(--ac2);flex-shrink:0}
+.pbtn{width:100%;padding:10px;border-radius:7px;font-size:13px;font-weight:500;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.pbtn.out{background:transparent;border:1px solid var(--bd2);color:var(--mu)}
+.pbtn.out:hover{border-color:rgba(255,255,255,.18);color:var(--tx)}
+.pbtn.fil{background:var(--ac);color:#fff}
+.pbtn.fil:hover{background:#7a72ff}
+
+/* FOOTER */
+footer{padding:44px 24px;border-top:1px solid var(--bd);display:flex;flex-direction:column;align-items:center;gap:14px}
+.fl{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.fl span{color:var(--mu2);font-weight:400}
+.ft{font-size:11px;color:var(--mu2);letter-spacing:.04em}
+.fls{display:flex;gap:22px;flex-wrap:wrap;justify-content:center}
+.flink{font-size:12px;color:var(--mu2);cursor:pointer;transition:color .15s}
+.flink:hover{color:var(--mu)}
+.fc{font-size:11px;color:rgba(255,255,255,.12)}
+
+/* FADE IN */
+.fi{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+.fi.vis{opacity:1;transform:none}
+
+@media(max-width:580px){
+  nav{padding:0 18px}
+  .sec{padding:64px 18px}
+  .hero{padding:78px 18px}
+  .dbox{padding:22px 18px}
+  .hmeta{gap:18px}
+  .hbtns{flex-direction:column;align-items:stretch}
+}
+</style>
+</head>
+<body>
+
+<!-- LANG -->
+<div class="lang">
+  <button class="lb" onclick="setL('es',event)">ES</button>
+  <button class="lb on" onclick="setL('en',event)">EN</button>
+  <button class="lb" onclick="setL('fr',event)">FR</button>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="nlogo" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="4.5" r="1.8" fill="#2dd4bf" opacity=".9"/>
+      <circle cx="17.5" cy="7.5" r="1.3" fill="#6c63ff" opacity=".7"/>
+      <circle cx="19.5" cy="14" r="2.2" fill="#6c63ff"/>
+      <circle cx="16" cy="19.5" r="1.4" fill="#2dd4bf" opacity=".8"/>
+      <circle cx="9.5" cy="20.5" r="1.1" fill="#6c63ff" opacity=".55"/>
+      <circle cx="4.5" cy="16.5" r="1.8" fill="#2dd4bf" opacity=".7"/>
+      <circle cx="4.5" cy="9.5" r="1.3" fill="#6c63ff" opacity=".5"/>
+      <circle cx="8" cy="4.5" r="1.1" fill="#2dd4bf" opacity=".6"/>
+      <circle cx="12" cy="12" r="3.6" fill="url(#g0)"/>
+      <defs><radialGradient id="g0" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#6c63ff"/>
+        <stop offset="100%" stop-color="#2dd4bf"/>
+      </radialGradient></defs>
+    </svg>
+    <div class="nlogt">Orbys <em>Business OS</em></div>
+  </div>
+  <div class="nlinks">
+    <span class="nl" id="n1">What it is</span>
+    <span class="nl" id="n2">How it works</span>
+    <span class="nl" id="n3">Pricing</span>
+    <button class="ncta" id="n4">Try demo</button>
+  </div>
+</nav>
+
+<!-- ══════ ENGLISH ══════ -->
+<div id="sl-en" class="slide on">
+  <div class="hero">
+    <div class="hbg"></div><div class="hbg2"></div>
+    <div class="hbadge"><span class="hdot"></span>Orbys Business OS</div>
+    <h1 class="hh1"><span class="g">Imagine your company<br>always knowing everything.</span><br>In real time.</h1>
+    <p class="hp">Every area of your business powered by AI agents that know exactly how your company works — and act on it, 24/7.</p>
+    <div class="hbtns">
+      <button class="bp" onclick="gs('demo-en')">Try the live demo →</button>
+      <button class="bs" onclick="gs('vis-en')">See how it works</button>
+    </div>
+    <div class="hmeta">
+      <span class="hmi">Always up to date</span>
+      <span class="hmi">12 AI expert agents</span>
+      <span class="hmi">No code required</span>
+      <span class="hmi">Canada-based data</span>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec fi" id="vis-en">
+    <div class="slabel">What is Orbys</div>
+    <h2 class="sh">Not another software.<br><span class="g">Your company, powered by AI.</span></h2>
+    <p class="sp">Orbys becomes the nervous system of your business. Every area has its own expert agent that learns from your real data and acts accordingly.</p>
+    <div class="vg">
+      <div class="vc"><span class="vi">⚡</span><div class="vt">Always current</div><div class="vd">Production, sales, inventory and finance updated in real time. No waiting for the Monday report.</div></div>
+      <div class="vc"><span class="vi">🧠</span><div class="vt">Real data decisions</div><div class="vd">Not intuition. Real data from your company, clients and market — always fresh.</div></div>
+      <div class="vc"><span class="vi">🔌</span><div class="vt">Connects with what you have</div><div class="vd">ERP, CRM, QuickBooks, Sheets — Orbys integrates. If you have nothing, we build it.</div></div>
+      <div class="vc"><span class="vi">🌐</span><div class="vt">Market intelligence</div><div class="vd">Monitors competitor moves and market opportunities. Always one step ahead.</div></div>
+    </div>
+  </div>
+  <div class="aw">
+    <div class="ai fi">
+      <div class="slabel">The team</div>
+      <h2 class="sh">12 AI experts.<br><span class="g">One ecosystem.</span></h2>
+      <p class="sp">Each agent knows YOUR company — not a template. They coordinate to make decisions in real time.</p>
+      <div class="ag">
+        <div class="ac"><span class="ae">🏭</span><div class="an">TAMM</div><div class="ar">Production</div></div>
+        <div class="ac"><span class="ae">💰</span><div class="an">GUMM</div><div class="ar">Finance</div></div>
+        <div class="ac"><span class="ae">📊</span><div class="an">NANA</div><div class="ar">Sales</div></div>
+        <div class="ac"><span class="ae">✅</span><div class="an">AMM</div><div class="ar">Quality</div></div>
+        <div class="ac"><span class="ae">🔧</span><div class="an">WAWA</div><div class="ar">Maintenance</div></div>
+        <div class="ac"><span class="ae">👥</span><div class="an">COCO</div><div class="ar">HR</div></div>
+        <div class="ac"><span class="ae">📦</span><div class="an">MAMA</div><div class="ar">Logistics</div></div>
+        <div class="ac"><span class="ae">👑</span><div class="an">TATA</div><div class="ar">Leadership</div></div>
+        <div class="ac"><span class="ae">📣</span><div class="an">TRPPP</div><div class="ar">Marketing</div></div>
+        <div class="ac"><span class="ae">🔁</span><div class="an">UMUM</div><div class="ar">Improvement</div></div>
+        <div class="ac"><span class="ae">📋</span><div class="an">WRAWRA</div><div class="ar">PMO</div></div>
+        <div class="ac"><span class="ae">🗄️</span><div class="an">ARCHI</div><div class="ar">Memory</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec fi" id="how-en">
+    <div class="slabel">How it works</div>
+    <h2 class="sh">Simple for you.<br><span class="g">Powerful inside.</span></h2>
+    <p class="sp">Your team keeps doing what they always do. Orbys works in the background — always on, always learning.</p>
+    <div class="steps">
+      <div class="step"><div class="sn">1</div><div><div class="st">We capture your company's DNA</div><div class="sd">Your processes, products, clients and standards enter the Second Brain. Connects with your current systems. Once set up, always updated automatically.</div></div></div>
+      <div class="step"><div class="sn">2</div><div><div class="st">Agents learn YOUR business</div><div class="sd">Each agent specializes with real data from your company. Not generic. They know YOUR production, YOUR clients, YOUR numbers.</div></div></div>
+      <div class="step"><div class="sn">3</div><div><div class="st">Orbys operates in real time</div><div class="sd">Monitors, alerts, analyzes and acts. If something goes off track, you know before it becomes a problem. Always fresh data.</div></div></div>
+      <div class="step"><div class="sn">4</div><div><div class="st">Your company makes better decisions</div><div class="sd">With all information available in seconds, decisions become evidence-based. Faster, more accurate. You focus on growing.</div></div></div>
+    </div>
+  </div>
+  <div class="sw">
+    <div class="si fi">
+      <div class="slabel">Real results</div>
+      <h2 class="sh">What changes when you<br><span class="g">run on Orbys.</span></h2>
+      <div class="sg">
+        <div class="st2"><div class="sv">+23%</div><div class="sl">More new clients<br>in 6 months</div></div>
+        <div class="st2"><div class="sv">−35%</div><div class="sl">Fewer unplanned<br>production stops</div></div>
+        <div class="st2"><div class="sv">+18%</div><div class="sl">Efficiency<br>improvement</div></div>
+        <div class="st2"><div class="sv">24/7</div><div class="sl">Uninterrupted<br>monitoring</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="dw" id="demo-en">
+    <div class="di fi">
+      <div class="slabel">Live demo</div>
+      <h2 class="sh">See it in action.<br><span class="g">With real data.</span></h2>
+      <p class="sp" style="margin:0 auto;text-align:center">Enter your details and get immediate access. Talk to our AI agents directly.</p>
+      <div class="dbox">
+        <div class="dbt">Try the live demo</div>
+        <div class="dbd">Talk with TATA, our executive AI agent. Ask anything and watch it analyze, coordinate and respond in real time.</div>
+        <form class="form" onsubmit="hd(event)">
+          <input class="inp" type="text" placeholder="Your name" required>
+          <input class="inp" type="email" placeholder="Work email" required>
+          <input class="inp" type="text" placeholder="Company name" required>
+          <button class="fbtn" type="submit">Access live demo →</button>
+        </form>
+        <div class="fnote">No credit card · Instant access · No commitment</div>
+      </div>
+    </div>
+  </div>
+  <div class="pw" id="price-en">
+    <div class="pi fi">
+      <div class="slabel">Pricing</div>
+      <h2 class="sh">The executive team<br><span class="g">you could never afford.</span></h2>
+      <p class="sp">Replacing these agents with real specialists costs over $17,500 CAD/month. Orbys starts at $500.</p>
+      <div class="pg">
+        <div class="pc"><div class="pn">Starter</div><div class="pp">$500</div><div class="pper">CAD / month + setup</div><div class="pfs"><div class="pf">3 active areas</div><div class="pf">Basic AI agents</div><div class="pf">Executive dashboard</div><div class="pf">Chat support</div><div class="pf">Canada-based data</div></div><button class="pbtn out" onclick="gs('demo-en')">Start demo</button></div>
+        <div class="pc hot"><div class="pb2">Most popular</div><div class="pn">Growth</div><div class="pp">$1,200</div><div class="pper">CAD / month + setup</div><div class="pfs"><div class="pf">6 active areas</div><div class="pf">Advanced agents</div><div class="pf">Automated reports</div><div class="pf">Priority support</div><div class="pf">External integrations</div></div><button class="pbtn fil" onclick="gs('demo-en')">Start demo</button></div>
+        <div class="pc"><div class="pn">Enterprise</div><div class="pp">$2,500</div><div class="pper">CAD / month + setup</div><div class="pfs"><div class="pf">All 12 agents</div><div class="pf">Autonomous agents</div><div class="pf">Custom integrations</div><div class="pf">Dedicated support</div><div class="pf">Multi-industry</div></div><button class="pbtn out" onclick="gs('demo-en')">Contact us</button></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="fl">Orbys <span>Business OS</span></div>
+    <div class="ft">Your company. Powered by AI. Always on.</div>
+    <div class="fls"><span class="flink" onclick="gs('vis-en')">What it is</span><span class="flink" onclick="gs('how-en')">How it works</span><span class="flink" onclick="gs('price-en')">Pricing</span><span class="flink" onclick="gs('demo-en')">Demo</span></div>
+    <div class="fc">© 2026 Orbys Business OS · orbys-ai.com · Mississauga, ON, Canada</div>
+  </footer>
+</div>
+
+<!-- ══════ ESPAÑOL ══════ -->
+<div id="sl-es" class="slide">
+  <div class="hero">
+    <div class="hbg"></div><div class="hbg2"></div>
+    <div class="hbadge"><span class="hdot"></span>Orbys Business OS</div>
+    <h1 class="hh1"><span class="g">Imagina tu empresa<br>siempre al día.</span><br>En tiempo real.</h1>
+    <p class="hp">Cada área de tu negocio operada por agentes de IA que conocen exactamente cómo funciona tu empresa — y actúan en consecuencia, 24/7.</p>
+    <div class="hbtns">
+      <button class="bp" onclick="gs('demo-es')">Ver demo en vivo →</button>
+      <button class="bs" onclick="gs('vis-es')">Cómo funciona</button>
+    </div>
+    <div class="hmeta">
+      <span class="hmi">Siempre actualizado</span>
+      <span class="hmi">12 agentes expertos de IA</span>
+      <span class="hmi">Sin código requerido</span>
+      <span class="hmi">Datos en Canadá</span>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec fi" id="vis-es">
+    <div class="slabel">Qué es Orbys</div>
+    <h2 class="sh">No es un software más.<br><span class="g">Tu empresa, con IA.</span></h2>
+    <p class="sp">Orbys se convierte en el sistema nervioso de tu negocio. Cada área tiene su propio agente experto que aprende de tus datos reales y actúa en consecuencia.</p>
+    <div class="vg">
+      <div class="vc"><span class="vi">⚡</span><div class="vt">Siempre al día</div><div class="vd">Producción, ventas, inventario y finanzas actualizados en tiempo real. Sin esperar el reporte del lunes.</div></div>
+      <div class="vc"><span class="vi">🧠</span><div class="vt">Decisiones con datos reales</div><div class="vd">No intuición. Datos reales de tu empresa, clientes y mercado — siempre frescos.</div></div>
+      <div class="vc"><span class="vi">🔌</span><div class="vt">Se conecta con lo que tienes</div><div class="vd">ERP, CRM, QuickBooks, Sheets — Orbys se integra. Si no tienes nada, lo construimos.</div></div>
+      <div class="vc"><span class="vi">🌐</span><div class="vt">Inteligencia de mercado</div><div class="vd">Monitorea a la competencia y oportunidades del mercado. Siempre un paso adelante.</div></div>
+    </div>
+  </div>
+  <div class="aw">
+    <div class="ai fi">
+      <div class="slabel">El equipo</div>
+      <h2 class="sh">12 expertos de IA.<br><span class="g">Un ecosistema.</span></h2>
+      <p class="sp">Cada agente conoce TU empresa — no un template genérico. Se coordinan para tomar decisiones en tiempo real.</p>
+      <div class="ag">
+        <div class="ac"><span class="ae">🏭</span><div class="an">TAMM</div><div class="ar">Producción</div></div>
+        <div class="ac"><span class="ae">💰</span><div class="an">GUMM</div><div class="ar">Finanzas</div></div>
+        <div class="ac"><span class="ae">📊</span><div class="an">NANA</div><div class="ar">Ventas</div></div>
+        <div class="ac"><span class="ae">✅</span><div class="an">AMM</div><div class="ar">Calidad</div></div>
+        <div class="ac"><span class="ae">🔧</span><div class="an">WAWA</div><div class="ar">Mantenimiento</div></div>
+        <div class="ac"><span class="ae">👥</span><div class="an">COCO</div><div class="ar">RRHH</div></div>
+        <div class="ac"><span class="ae">📦</span><div class="an">MAMA</div><div class="ar">Logística</div></div>
+        <div class="ac"><span class="ae">👑</span><div class="an">TATA</div><div class="ar">Dirección</div></div>
+        <div class="ac"><span class="ae">📣</span><div class="an">TRPPP</div><div class="ar">Marketing</div></div>
+        <div class="ac"><span class="ae">🔁</span><div class="an">UMUM</div><div class="ar">Mejora</div></div>
+        <div class="ac"><span class="ae">📋</span><div class="an">WRAWRA</div><div class="ar">PMO</div></div>
+        <div class="ac"><span class="ae">🗄️</span><div class="an">ARCHI</div><div class="ar">Memoria</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec fi" id="how-es">
+    <div class="slabel">Cómo funciona</div>
+    <h2 class="sh">Simple para ti.<br><span class="g">Poderoso por dentro.</span></h2>
+    <p class="sp">Tu equipo sigue haciendo lo que siempre hace. Orbys trabaja en segundo plano — siempre activo, siempre aprendiendo.</p>
+    <div class="steps">
+      <div class="step"><div class="sn">1</div><div><div class="st">Capturamos el ADN de tu empresa</div><div class="sd">Tus procesos, productos, clientes y estándares entran al Second Brain. Se conecta con tus sistemas. Una vez configurado, siempre actualizado.</div></div></div>
+      <div class="step"><div class="sn">2</div><div><div class="st">Los agentes aprenden TU negocio</div><div class="sd">Cada agente se especializa con información real de tu empresa. No genéricos. Conocen TU producción, TUS clientes, TUS números.</div></div></div>
+      <div class="step"><div class="sn">3</div><div><div class="st">Orbys opera en tiempo real</div><div class="sd">Monitorea, alerta, analiza y actúa. Si algo sale de lo normal, lo sabes antes de que sea un problema.</div></div></div>
+      <div class="step"><div class="sn">4</div><div><div class="st">Tu empresa toma mejores decisiones</div><div class="sd">Con toda la información en segundos, las decisiones pasan a ser por evidencia. Más rápidas y más acertadas.</div></div></div>
+    </div>
+  </div>
+  <div class="sw">
+    <div class="si fi">
+      <div class="slabel">Resultados reales</div>
+      <h2 class="sh">Lo que cambia cuando<br><span class="g">operas con Orbys.</span></h2>
+      <div class="sg">
+        <div class="st2"><div class="sv">+23%</div><div class="sl">Más clientes nuevos<br>en 6 meses</div></div>
+        <div class="st2"><div class="sv">−35%</div><div class="sl">Menos paros<br>no planeados</div></div>
+        <div class="st2"><div class="sv">+18%</div><div class="sl">Mejora en<br>eficiencia</div></div>
+        <div class="st2"><div class="sv">24/7</div><div class="sl">Monitoreo sin<br>interrupciones</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="dw" id="demo-es">
+    <div class="di fi">
+      <div class="slabel">Demo en vivo</div>
+      <h2 class="sh">Míralo en acción.<br><span class="g">Con datos reales.</span></h2>
+      <p class="sp" style="margin:0 auto;text-align:center">Ingresa tus datos y accede al instante. Habla directamente con los agentes de IA.</p>
+      <div class="dbox">
+        <div class="dbt">Probar demo en vivo</div>
+        <div class="dbd">Habla con TATA, nuestro agente ejecutivo de IA. Pregúntale lo que quieras y mira cómo analiza, coordina y responde en tiempo real.</div>
+        <form class="form" onsubmit="hd(event)">
+          <input class="inp" type="text" placeholder="Tu nombre" required>
+          <input class="inp" type="email" placeholder="Email de trabajo" required>
+          <input class="inp" type="text" placeholder="Nombre de tu empresa" required>
+          <button class="fbtn" type="submit">Acceder al demo en vivo →</button>
+        </form>
+        <div class="fnote">Sin tarjeta de crédito · Acceso instantáneo · Sin compromiso</div>
+      </div>
+    </div>
+  </div>
+  <div class="pw" id="price-es">
+    <div class="pi fi">
+      <div class="slabel">Precios</div>
+      <h2 class="sh">El equipo directivo que<br><span class="g">nunca pudiste pagar.</span></h2>
+      <p class="sp">Reemplazar estos agentes con especialistas reales costaría más de $17,500 CAD/mes. Orbys empieza en $500.</p>
+      <div class="pg">
+        <div class="pc"><div class="pn">Starter</div><div class="pp">$500</div><div class="pper">CAD / mes + setup</div><div class="pfs"><div class="pf">3 áreas activas</div><div class="pf">Agentes básicos de IA</div><div class="pf">Dashboard ejecutivo</div><div class="pf">Soporte por chat</div><div class="pf">Datos en Canadá</div></div><button class="pbtn out" onclick="gs('demo-es')">Comenzar demo</button></div>
+        <div class="pc hot"><div class="pb2">Más popular</div><div class="pn">Growth</div><div class="pp">$1,200</div><div class="pper">CAD / mes + setup</div><div class="pfs"><div class="pf">6 áreas activas</div><div class="pf">Agentes avanzados</div><div class="pf">Reportes automáticos</div><div class="pf">Soporte prioritario</div><div class="pf">Integraciones externas</div></div><button class="pbtn fil" onclick="gs('demo-es')">Comenzar demo</button></div>
+        <div class="pc"><div class="pn">Enterprise</div><div class="pp">$2,500</div><div class="pper">CAD / mes + setup</div><div class="pfs"><div class="pf">12 agentes completos</div><div class="pf">Agentes autónomos</div><div class="pf">Integraciones a medida</div><div class="pf">Soporte dedicado</div><div class="pf">Multi-industria</div></div><button class="pbtn out" onclick="gs('demo-es')">Contáctanos</button></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="fl">Orbys <span>Business OS</span></div>
+    <div class="ft">Tu empresa. Con IA. Siempre activa.</div>
+    <div class="fls"><span class="flink" onclick="gs('vis-es')">Qué es</span><span class="flink" onclick="gs('how-es')">Cómo funciona</span><span class="flink" onclick="gs('price-es')">Precios</span><span class="flink" onclick="gs('demo-es')">Demo</span></div>
+    <div class="fc">© 2026 Orbys Business OS · orbys-ai.com · Mississauga, ON, Canadá</div>
+  </footer>
+</div>
+
+<!-- ══════ FRANÇAIS ══════ -->
+<div id="sl-fr" class="slide">
+  <div class="hero">
+    <div class="hbg"></div><div class="hbg2"></div>
+    <div class="hbadge"><span class="hdot"></span>Orbys Business OS</div>
+    <h1 class="hh1"><span class="g">Imaginez votre entreprise<br>toujours informée.</span><br>En temps réel.</h1>
+    <p class="hp">Chaque département piloté par des agents IA qui connaissent exactement comment votre entreprise fonctionne — et agissent en conséquence, 24h/7j.</p>
+    <div class="hbtns">
+      <button class="bp" onclick="gs('demo-fr')">Voir la démo →</button>
+      <button class="bs" onclick="gs('vis-fr')">Comment ça marche</button>
+    </div>
+    <div class="hmeta">
+      <span class="hmi">Toujours à jour</span>
+      <span class="hmi">12 agents IA experts</span>
+      <span class="hmi">Sans code requis</span>
+      <span class="hmi">Données au Canada</span>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <div class="sec fi" id="vis-fr">
+    <div class="slabel">Qu'est-ce qu'Orbys</div>
+    <h2 class="sh">Pas un logiciel de plus.<br><span class="g">Votre entreprise, propulsée par l'IA.</span></h2>
+    <p class="sp">Orbys devient le système nerveux de votre entreprise. Chaque département a son propre agent expert qui apprend de vos données réelles et agit en conséquence.</p>
+    <div class="vg">
+      <div class="vc"><span class="vi">⚡</span><div class="vt">Toujours à jour</div><div class="vd">Production, ventes, inventaire et finances mis à jour en temps réel. Sans attendre le rapport du lundi.</div></div>
+      <div class="vc"><span class="vi">🧠</span><div class="vt">Décisions basées sur des données</div><div class="vd">Pas sur l'intuition. Données réelles de votre entreprise, clients et marché — toujours fraîches.</div></div>
+      <div class="vc"><span class="vi">🔌</span><div class="vt">Se connecte à ce que vous avez</div><div class="vd">ERP, CRM, QuickBooks, Sheets — Orbys s'intègre. Si vous n'avez rien, on le construit.</div></div>
+      <div class="vc"><span class="vi">🌐</span><div class="vt">Intelligence marché</div><div class="vd">Surveille les concurrents et les opportunités du marché. Toujours en avance.</div></div>
+    </div>
+  </div>
+  <div class="aw">
+    <div class="ai fi">
+      <div class="slabel">L'équipe</div>
+      <h2 class="sh">12 experts IA.<br><span class="g">Un écosystème.</span></h2>
+      <p class="sp">Chaque agent connaît VOTRE entreprise — pas un modèle. Ils se coordonnent pour prendre des décisions en temps réel.</p>
+      <div class="ag">
+        <div class="ac"><span class="ae">🏭</span><div class="an">TAMM</div><div class="ar">Production</div></div>
+        <div class="ac"><span class="ae">💰</span><div class="an">GUMM</div><div class="ar">Finance</div></div>
+        <div class="ac"><span class="ae">📊</span><div class="an">NANA</div><div class="ar">Ventes</div></div>
+        <div class="ac"><span class="ae">✅</span><div class="an">AMM</div><div class="ar">Qualité</div></div>
+        <div class="ac"><span class="ae">🔧</span><div class="an">WAWA</div><div class="ar">Maintenance</div></div>
+        <div class="ac"><span class="ae">👥</span><div class="an">COCO</div><div class="ar">RH</div></div>
+        <div class="ac"><span class="ae">📦</span><div class="an">MAMA</div><div class="ar">Logistique</div></div>
+        <div class="ac"><span class="ae">👑</span><div class="an">TATA</div><div class="ar">Direction</div></div>
+        <div class="ac"><span class="ae">📣</span><div class="an">TRPPP</div><div class="ar">Marketing</div></div>
+        <div class="ac"><span class="ae">🔁</span><div class="an">UMUM</div><div class="ar">Amélioration</div></div>
+        <div class="ac"><span class="ae">📋</span><div class="an">WRAWRA</div><div class="ar">PMO</div></div>
+        <div class="ac"><span class="ae">🗄️</span><div class="an">ARCHI</div><div class="ar">Mémoire</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sec fi" id="how-fr">
+    <div class="slabel">Comment ça fonctionne</div>
+    <h2 class="sh">Simple pour vous.<br><span class="g">Puissant à l'intérieur.</span></h2>
+    <p class="sp">Votre équipe continue comme d'habitude. Orbys travaille en arrière-plan — toujours actif, toujours en train d'apprendre.</p>
+    <div class="steps">
+      <div class="step"><div class="sn">1</div><div><div class="st">Nous capturons l'ADN de votre entreprise</div><div class="sd">Vos processus, produits, clients et standards entrent dans le Second Brain. Se connecte à vos systèmes. Une fois configuré, toujours à jour.</div></div></div>
+      <div class="step"><div class="sn">2</div><div><div class="st">Les agents apprennent VOTRE activité</div><div class="sd">Chaque agent se spécialise avec des données réelles de votre entreprise. Pas génériques. Ils connaissent VOTRE production, VOS clients, VOS chiffres.</div></div></div>
+      <div class="step"><div class="sn">3</div><div><div class="st">Orbys opère en temps réel</div><div class="sd">Surveille, alerte, analyse et agit. Si quelque chose sort de l'ordinaire, vous le savez avant que ça devienne un problème.</div></div></div>
+      <div class="step"><div class="sn">4</div><div><div class="st">Votre entreprise prend de meilleures décisions</div><div class="sd">Avec toutes les informations en secondes, les décisions deviennent basées sur des preuves. Plus rapides et plus justes.</div></div></div>
+    </div>
+  </div>
+  <div class="sw">
+    <div class="si fi">
+      <div class="slabel">Résultats réels</div>
+      <h2 class="sh">Ce qui change quand vous<br><span class="g">opérez avec Orbys.</span></h2>
+      <div class="sg">
+        <div class="st2"><div class="sv">+23%</div><div class="sl">Nouveaux clients<br>en 6 mois</div></div>
+        <div class="st2"><div class="sv">−35%</div><div class="sl">Moins d'arrêts<br>imprévus</div></div>
+        <div class="st2"><div class="sv">+18%</div><div class="sl">Amélioration<br>d'efficacité</div></div>
+        <div class="st2"><div class="sv">24/7</div><div class="sl">Surveillance<br>continue</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="dw" id="demo-fr">
+    <div class="di fi">
+      <div class="slabel">Démo en direct</div>
+      <h2 class="sh">Voyez-le en action.<br><span class="g">Avec de vraies données.</span></h2>
+      <p class="sp" style="margin:0 auto;text-align:center">Entrez vos coordonnées et accédez immédiatement. Parlez directement aux agents IA.</p>
+      <div class="dbox">
+        <div class="dbt">Essayer la démo en direct</div>
+        <div class="dbd">Parlez avec TATA, notre agent IA exécutif. Posez n'importe quelle question et regardez-le analyser, coordonner et répondre en temps réel.</div>
+        <form class="form" onsubmit="hd(event)">
+          <input class="inp" type="text" placeholder="Votre nom" required>
+          <input class="inp" type="email" placeholder="Email professionnel" required>
+          <input class="inp" type="text" placeholder="Nom de votre entreprise" required>
+          <button class="fbtn" type="submit">Accéder à la démo →</button>
+        </form>
+        <div class="fnote">Sans carte de crédit · Accès instantané · Sans engagement</div>
+      </div>
+    </div>
+  </div>
+  <div class="pw" id="price-fr">
+    <div class="pi fi">
+      <div class="slabel">Tarifs</div>
+      <h2 class="sh">L'équipe dirigeante que<br><span class="g">vous n'avez jamais pu vous permettre.</span></h2>
+      <p class="sp">Remplacer ces agents par de vrais spécialistes coûterait plus de 17 500 $ CAD/mois. Orbys commence à 500 $.</p>
+      <div class="pg">
+        <div class="pc"><div class="pn">Starter</div><div class="pp">500 $</div><div class="pper">CAD / mois + setup</div><div class="pfs"><div class="pf">3 domaines actifs</div><div class="pf">Agents IA de base</div><div class="pf">Tableau de bord</div><div class="pf">Support par chat</div><div class="pf">Données au Canada</div></div><button class="pbtn out" onclick="gs('demo-fr')">Commencer la démo</button></div>
+        <div class="pc hot"><div class="pb2">Plus populaire</div><div class="pn">Growth</div><div class="pp">1 200 $</div><div class="pper">CAD / mois + setup</div><div class="pfs"><div class="pf">6 domaines actifs</div><div class="pf">Agents avancés</div><div class="pf">Rapports automatiques</div><div class="pf">Support prioritaire</div><div class="pf">Intégrations externes</div></div><button class="pbtn fil" onclick="gs('demo-fr')">Commencer la démo</button></div>
+        <div class="pc"><div class="pn">Enterprise</div><div class="pp">2 500 $</div><div class="pper">CAD / mois + setup</div><div class="pfs"><div class="pf">12 agents complets</div><div class="pf">Agents autonomes</div><div class="pf">Intégrations sur mesure</div><div class="pf">Support dédié</div><div class="pf">Multi-industrie</div></div><button class="pbtn out" onclick="gs('demo-fr')">Nous contacter</button></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="fl">Orbys <span>Business OS</span></div>
+    <div class="ft">Votre entreprise. Propulsée par l'IA. Toujours active.</div>
+    <div class="fls"><span class="flink" onclick="gs('vis-fr')">Qu'est-ce que c'est</span><span class="flink" onclick="gs('how-fr')">Comment ça marche</span><span class="flink" onclick="gs('price-fr')">Tarifs</span><span class="flink" onclick="gs('demo-fr')">Démo</span></div>
+    <div class="fc">© 2026 Orbys Business OS · orbys-ai.com · Mississauga, ON, Canada</div>
+  </footer>
+</div>
+
+<script>
+const NV={
+  en:{n1:'What it is',n2:'How it works',n3:'Pricing',n4:'Try demo',d1:'vis-en',d2:'how-en',d3:'price-en',d4:'demo-en'},
+  es:{n1:'Qué es',n2:'Cómo funciona',n3:'Precios',n4:'Ver demo',d1:'vis-es',d2:'how-es',d3:'price-es',d4:'demo-es'},
+  fr:{n1:"Qu'est-ce que c'est",n2:'Comment ça marche',n3:'Tarifs',n4:'Voir la démo',d1:'vis-fr',d2:'how-fr',d3:'price-fr',d4:'demo-fr'}
+};
+let cl='en';
+function setL(l,e){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.lb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sl-'+l).classList.add('on');
+  e.target.classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+  cl=l;
+  const n=NV[l];
+  document.getElementById('n1').textContent=n.n1;
+  document.getElementById('n2').textContent=n.n2;
+  document.getElementById('n3').textContent=n.n3;
+  document.getElementById('n4').textContent=n.n4;
+  document.getElementById('n1').onclick=()=>gs(n.d1);
+  document.getElementById('n2').onclick=()=>gs(n.d2);
+  document.getElementById('n3').onclick=()=>gs(n.d3);
+  document.getElementById('n4').onclick=()=>gs(n.d4);
+  obs();
+}
+function gs(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+function hd(e){e.preventDefault();window.open('https://shemika13487.softr.app','_blank')}
+function obs(){
+  const io=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('vis')})},{threshold:.07});
+  document.querySelectorAll('.fi').forEach(el=>{el.classList.remove('vis');io.observe(el)});
+}
+// Nav link defaults
+document.getElementById('n1').onclick=()=>gs('vis-en');
+document.getElementById('n2').onclick=()=>gs('how-en');
+document.getElementById('n3').onclick=()=>gs('price-en');
+document.getElementById('n4').onclick=()=>gs('demo-en');
+obs();
+</script>
+</body>
+</html>
