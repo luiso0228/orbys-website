@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Orbys — Request a Quote</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #09090e;
+  --surface: #111118;
+  --surface2: #1a1a24;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0eff5;
+  --muted: #6b6b80;
+  --accent: #6c63ff;
+  --accent2: #2dd4bf;
+  --success: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg)}
+body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;line-height:1.5;padding:0 0 60px}
+
+.header{
+  background:rgba(9,9,14,0.9);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;background:linear-gradient(135deg,#fff 0%,#a5a0ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-weight:400;opacity:0.5}
+.header-badge{font-size:11px;padding:4px 10px;border-radius:100px;background:rgba(45,212,191,0.12);color:#5dcaa5;border:1px solid rgba(45,212,191,0.2);font-family:'DM Mono',monospace}
+
+.container{max-width:580px;margin:0 auto;padding:32px 20px}
+
+.hero{text-align:center;margin-bottom:36px}
+.hero-eyebrow{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:10px;font-family:'DM Mono',monospace}
+.hero-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.5px;margin-bottom:10px;line-height:1.2}
+.hero-title em{font-style:normal;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:15px;color:var(--muted);line-height:1.6}
+
+.form-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px;margin-bottom:16px}
+.form-section-title{font-family:'Syne',sans-serif;font-weight:600;font-size:14px;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.section-icon{font-size:16px}
+
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:0.05em;text-transform:uppercase;font-weight:500}
+.field input,
+.field select,
+.field textarea{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;-webkit-appearance:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field select option{background:var(--surface);color:var(--text)}
+.field textarea{resize:vertical;min-height:100px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-hint{font-size:12px;color:var(--muted);margin-top:5px}
+
+.complexity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.complexity-btn{
+  padding:10px 8px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:all 0.15s;text-align:center;font-family:'DM Sans',sans-serif;
+}
+.complexity-btn:hover{border-color:var(--accent);color:var(--text)}
+.complexity-btn.active{background:rgba(108,99,255,0.12);border-color:var(--accent);color:var(--text)}
+.complexity-label{font-weight:500;display:block;margin-bottom:2px}
+.complexity-desc{font-size:11px;color:var(--muted)}
+
+.submit-btn{
+  width:100%;padding:16px;border-radius:100px;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:16px;border:none;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;
+}
+.submit-btn:hover{background:#7c73ff;transform:translateY(-1px)}
+.submit-btn:disabled{background:var(--surface2);cursor:not-allowed;transform:none}
+
+.trust-row{display:flex;justify-content:center;gap:24px;margin-top:20px;flex-wrap:wrap}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.trust-icon{font-size:14px}
+
+/* Success */
+.success-screen{display:none;text-align:center;padding:48px 20px}
+.success-screen.active{display:block;animation:fadeUp 0.4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.success-icon{width:80px;height:80px;border-radius:50%;background:rgba(34,197,94,0.1);border:2px solid rgba(34,197,94,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:36px}
+.success-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;margin-bottom:12px}
+.success-sub{font-size:15px;color:var(--muted);margin-bottom:28px;line-height:1.65;max-width:400px;margin-left:auto;margin-right:auto}
+.quote-preview{background:var(--surface);border:1px solid var(--border2);border-radius:16px;padding:24px;text-align:left;margin-bottom:24px;white-space:pre-wrap;font-size:14px;line-height:1.7;color:var(--text)}
+.btn-new{display:inline-block;padding:14px 32px;border-radius:100px;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:600;font-size:15px;border:none;cursor:pointer;transition:all 0.2s}
+.btn-new:hover{background:#7c73ff}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(9,9,14,0.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999}
+.loading-overlay.active{display:flex}
+.spinner{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:600;margin-bottom:6px}
+.loading-sub{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Orbys<span>.ai</span></div>
+  <div class="header-badge">NANA · Sales Agent</div>
+</div>
+
+<div class="container">
+
+  <div id="form-view">
+    <div class="hero">
+      <div class="hero-eyebrow">Powered by NANA · AI Sales Agent</div>
+      <div class="hero-title">Get your quote in <em>minutes</em>, not days</div>
+      <div class="hero-sub">Fill out the form and our AI agent will generate a detailed quote automatically. No waiting, no back and forth.</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title"><span class="section-icon">👤</span> Contact information</div>
+      <div class="field">
+        <label>Company name *</label>
+        <input type="text" id="cliente" placeholder="e.g. Dinser Manufacturing Inc.">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Your name *</label>
+          <input type="text" id="contacto" placeholder="John Smith">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="tel" id="telefono" placeholder="+1 (416) 000-0000">
+        </div>
+      </div>
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" id="email_cliente" placeholder="john@company.com">
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title"><span class="section-icon">⚙️</span> Part details</div>
+      <div class="field">
+        <label>Part description *</label>
+        <textarea id="descripcion_pieza" placeholder="Describe the part — dimensions, tolerances, finish, special requirements..."></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Material</label>
+          <select id="material">
+            <option value="">Select...</option>
+            <option>Aluminum 6061</option>
+            <option>Aluminum 7075</option>
+            <option>Steel 1018</option>
+            <option>Steel 4140</option>
+            <option>Stainless 304</option>
+            <option>Stainless 316</option>
+            <option>Titanium</option>
+            <option>Brass</option>
+            <option>Copper</option>
+            <option>Plastic / Nylon</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Quantity *</label>
+          <input type="number" id="cantidad" placeholder="1" min="1">
+        </div>
+      </div>
+      <div class="field">
+        <label>Required delivery date</label>
+        <input type="date" id="fecha_entrega_req">
+        <div class="field-hint">Leave blank if flexible</div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title"><span class="section-icon">📊</span> Complexity</div>
+      <div class="field">
+        <label>How complex is this part?</label>
+        <div class="complexity-grid">
+          <button class="complexity-btn active" onclick="setComplexity('simple',this)">
+            <span class="complexity-label">Simple</span>
+            <span class="complexity-desc">Basic turning or milling</span>
+          </button>
+          <button class="complexity-btn" onclick="setComplexity('media',this)">
+            <span class="complexity-label">Medium</span>
+            <span class="complexity-desc">Multiple operations</span>
+          </button>
+          <button class="complexity-btn" onclick="setComplexity('alta',this)">
+            <span class="complexity-label">Complex</span>
+            <span class="complexity-desc">Tight tolerances, 5-axis</span>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Additional notes</label>
+        <textarea id="notas" placeholder="Surface finish requirements, certifications needed, file format for drawings..."></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitQuote()">Generate quote with NANA →</button>
+
+    <div class="trust-row">
+      <div class="trust-item"><span class="trust-icon">⚡</span> Quote in minutes</div>
+      <div class="trust-item"><span class="trust-icon">🔒</span> Your data is secure</div>
+      <div class="trust-item"><span class="trust-icon">🤝</span> No commitment</div>
+    </div>
+  </div>
+
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Quote generated!</div>
+    <div class="success-sub">NANA has analyzed your request and generated a preliminary quote. Our team will follow up within 24 hours to confirm details.</div>
+    <div class="quote-preview" id="quote-preview"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
+  <button class="btn-new" onclick="downloadPDF()" style="background:var(--accent2);color:#09090e;padding:12px 24px;font-size:14px">⬇ Download PDF</button>
+  <button class="btn-new" onclick="sendEmail()" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:12px 24px;font-size:14px">✉ Send to client</button>
+</div>
+<button class="btn-new" onclick="resetForm()">Request another quote →</button>
+  </div>
+
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-title">NANA is working on your quote...</div>
+  <div class="loading-sub">Analyzing requirements and calculating pricing</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://qghyxindomtfpjjyvcyx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_YhPWN67Zfg558wrnhFD6zA_o9e-jNIB';
+const PROXY = 'https://orbys-tamm-proxy.luismiguel-quicenocruz.workers.dev';
+
+let complejidad = 'simple';
+
+function setComplexity(val, btn) {
+  complejidad = val;
+  document.querySelectorAll('.complexity-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function submitQuote() {
+  const cliente = document.getElementById('cliente').value.trim();
+  const email = document.getElementById('email_cliente').value.trim();
+  const descripcion = document.getElementById('descripcion_pieza').value.trim();
+  const cantidad = document.getElementById('cantidad').value;
+
+  if (!cliente) { alert('Please enter your company name.'); return; }
+  if (!email) { alert('Please enter your email.'); return; }
+  if (!descripcion) { alert('Please describe the part.'); return; }
+  if (!cantidad) { alert('Please enter the quantity.'); return; }
+
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('submit-btn').disabled = true;
+
+  const prompt = `QUOTE REQUEST — NANA SALES AGENT
+
+Client: ${cliente}
+Email: ${email}
+Phone: ${document.getElementById('telefono').value}
+Part description: ${descripcion}
+Material: ${document.getElementById('material').value || 'Not specified'}
+Quantity: ${cantidad} units
+Required delivery: ${document.getElementById('fecha_entrega_req').value || 'Flexible'}
+Complexity: ${complejidad}
+Notes: ${document.getElementById('notas').value || 'None'}
+
+Generate a professional manufacturing quote including:
+1. Brief summary of what you understood about the part
+2. Estimated price range per unit and total (use realistic CNC machining rates for Ontario, Canada)
+3. Estimated lead time
+4. What's included (machining, deburring, inspection)
+5. What's NOT included (raw material, surface treatment, shipping unless specified)
+6. Next steps
+
+Format it professionally. Be specific with numbers. Maximum 300 words.`;
+
+  try {
+    // Call NANA via Flowise
+    const nanaRes = await fetch(PROXY + '/flowise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: prompt })
+    });
+    const nanaData = await nanaRes.json();
+    const cotizacionTexto = nanaData.text || 'Quote generated. Our team will follow up shortly.';
+
+    // Save to Supabase
+    const record = {
+      cliente,
+      email_cliente: email,
+      telefono: document.getElementById('telefono').value,
+      descripcion_pieza: descripcion,
+      material: document.getElementById('material').value,
+      cantidad: parseInt(cantidad),
+      fecha_entrega_req: document.getElementById('fecha_entrega_req').value || null,
+      complejidad,
+      notas: document.getElementById('notas').value,
+      cotizacion_texto: cotizacionTexto,
+      estado: 'generada',
+      procesado: false
+    };
+
+    await fetch(`${SUPABASE_URL}/rest/v1/cotizaciones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(record)
+    });
+
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('quote-preview').innerText = cotizacionTexto;
+    document.getElementById('success-screen').classList.add('active');
+
+  } catch(e) {
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('submit-btn').disabled = false;
+    alert('Connection error. Please try again.');
+  }
+}
+
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  const cliente = document.getElementById('cliente').value || 'Client';
+  const email = document.getElementById('email_cliente').value || '';
+  const telefono = document.getElementById('telefono').value || '';
+  const descripcion = document.getElementById('descripcion_pieza').value || '';
+  const material = document.getElementById('material').value || 'Not specified';
+  const cantidad = document.getElementById('cantidad').value || '1';
+  const entrega = document.getElementById('fecha_entrega_req').value || 'Flexible';
+  const notas = document.getElementById('notas').value || '';
+  const date = new Date().toLocaleDateString('en-CA');
+  const quoteNum = 'Q-' + Date.now().toString().slice(-6);
+  
+  // Get NANA quote text and clean it
+  const rawText = document.getElementById('quote-preview').innerText;
+  
+  // Extract key sections from NANA response
+  const lines = rawText.split('\n').filter(l => l.trim() && 
+    !l.includes('---') && 
+    !l.match(/^#{1,6}\s/) &&
+    !l.match(/^\|[-\s|]+\|$/)
+  ).map(l => l
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/^>\s*/, '')
+    .replace(/^-\s+/, '• ')
+    .trim()
+  ).filter(l => l.length > 2);
+
+  // ── HEADER ──
+  doc.setFillColor(108, 99, 255);
+  doc.rect(0, 0, 210, 30, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  doc.text('METALES DEL NORTE S.A.', 14, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Ontario, Canada  |  Powered by Orbys Manufacturing OS  |  orbys-ai.com', 14, 21);
+  doc.text('MANUFACTURING QUOTE', 150, 13);
+  
+  // ── QUOTE INFO BOX ──
+  doc.setFillColor(248, 248, 255);
+  doc.setDrawColor(108, 99, 255);
+  doc.setLineWidth(0.3);
+  doc.rect(14, 36, 182, 22, 'FD');
+  doc.setTextColor(60, 60, 80);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('QUOTE #' + quoteNum, 18, 44);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Issue date: ' + date, 18, 51);
+  doc.text('Valid for: 30 days', 18, 56);
+  doc.text('Client: ' + cliente, 100, 44);
+  doc.text('Email: ' + email, 100, 51);
+  if (telefono) doc.text('Phone: ' + telefono, 100, 56);
+
+  // ── SECTION: PART DETAILS ──
+  let y = 68;
+  doc.setFillColor(108, 99, 255);
+  doc.rect(14, y, 182, 7, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('PART DETAILS', 18, y + 5);
+  
+  y += 10;
+  doc.setTextColor(40, 40, 60);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  const details = [
+    ['Description', descripcion],
+    ['Material', material],
+    ['Quantity', cantidad + ' units'],
+    ['Required delivery', entrega],
+    ['Complexity', complejidad.charAt(0).toUpperCase() + complejidad.slice(1)],
+  ];
+  
+  details.forEach(([label, val]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(label + ':', 18, y);
+    doc.setFont('helvetica', 'normal');
+    const wrapped = doc.splitTextToSize(val, 130);
+    doc.text(wrapped, 65, y);
+    y += wrapped.length * 5 + 2;
+  });
+
+  // ── SECTION: NANA ANALYSIS ──
+  y += 4;
+  doc.setFillColor(108, 99, 255);
+  doc.rect(14, y, 182, 7, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('NANA ANALYSIS & PRICING', 18, y + 5);
+  
+  y += 12;
+  doc.setTextColor(40, 40, 60);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  lines.forEach(line => {
+    if (y > 265) { doc.addPage(); y = 20; }
+    if (line.startsWith('•')) {
+      doc.setFont('helvetica', 'normal');
+    } else if (line.includes(':') && line.indexOf(':') < 30) {
+      doc.setFont('helvetica', 'bold');
+    } else {
+      doc.setFont('helvetica', 'normal');
+    }
+    const wrapped = doc.splitTextToSize(line, 178);
+    doc.text(wrapped, 18, y);
+    y += wrapped.length * 5 + 1.5;
+  });
+
+  // ── NOTES ──
+  if (notas) {
+    y += 4;
+    doc.setFillColor(245, 245, 250);
+    doc.rect(14, y, 182, 6, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 100);
+    doc.text('ADDITIONAL NOTES', 18, y + 4);
+    y += 9;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(60, 60, 80);
+    const notasWrapped = doc.splitTextToSize(notas, 178);
+    doc.text(notasWrapped, 18, y);
+    y += notasWrapped.length * 5 + 4;
+  }
+
+  // ── FOOTER ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFillColor(108, 99, 255);
+    doc.rect(0, 284, 210, 13, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text('Metales del Norte S.A.  |  Ontario, Canada  |  orbys-ai.com', 14, 291);
+    doc.text('This quote is valid for 30 days from issue date  |  Page ' + i + ' of ' + pageCount, 120, 291);
+  }
+
+  doc.save('Quote-' + quoteNum + '-' + cliente.replace(/\s+/g, '-') + '.pdf');
+}
+
+function sendEmail() {
+  const email = document.getElementById('email_cliente').value;
+  const cliente = document.getElementById('cliente').value;
+  const quoteText = document.getElementById('quote-preview').innerText;
+  
+  if (!email) { alert('No email address found.'); return; }
+  
+  const subject = encodeURIComponent('Your Quote from Metales del Norte S.A. — Orbys');
+  const body = encodeURIComponent('Dear ' + cliente + ',\n\nThank you for your interest. Please find your quote details below:\n\n' + quoteText + '\n\nBest regards,\nSales Team\nMetales del Norte S.A.\nPowered by Orbys Manufacturing OS');
+  
+  window.open('mailto:' + email + '?subject=' + subject + '&body=' + body);
+}
+
+function resetForm() {
+  document.getElementById('form-view').style.display = 'block';
+  document.getElementById('success-screen').classList.remove('active');
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('cliente').value = '';
+  document.getElementById('email_cliente').value = '';
+  document.getElementById('telefono').value = '';
+  document.getElementById('descripcion_pieza').value = '';
+  document.getElementById('material').value = '';
+  document.getElementById('cantidad').value = '';
+  document.getElementById('fecha_entrega_req').value = '';
+  document.getElementById('notas').value = '';
+  complejidad = 'simple';
+  document.querySelectorAll('.complexity-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
