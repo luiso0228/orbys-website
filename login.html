@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbys — Access</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#09090e;--surface:#111118;--border:rgba(255,255,255,0.08);--text:#f0eff5;--muted:#6b6b80;--accent:#6c63ff;--accent2:#2dd4bf;--danger:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center}
+.card{width:100%;max-width:400px;padding:40px;background:var(--surface);border:1px solid var(--border);border-radius:20px;margin:24px}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;background:linear-gradient(135deg,#fff 0%,#a5a0ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.logo span{font-weight:400;opacity:0.5}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:32px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:0.05em}
+.field input{width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s}
+.field input:focus{border-color:var(--accent)}
+.btn{width:100%;padding:14px;border-radius:10px;background:var(--accent);border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s;margin-top:8px}
+.btn:hover{background:#7c73ff;transform:translateY(-1px)}
+.btn:disabled{background:var(--muted);cursor:not-allowed;transform:none}
+.error{font-size:13px;color:var(--danger);margin-top:12px;text-align:center;min-height:20px}
+.footer{text-align:center;font-size:11px;color:var(--muted);margin-top:24px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Orbys<span>.ai</span></div>
+  <div class="subtitle">Manufacturing OS — Secure Access</div>
+  <div class="field">
+    <label>EMAIL</label>
+    <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+  </div>
+  <div class="field">
+    <label>PASSWORD</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+  </div>
+  <button class="btn" id="login-btn" onclick="doLogin()">Access Orbys</button>
+  <div class="error" id="error-msg"></div>
+  <div class="footer">Orbys Business OS · Secure login powered by Supabase</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://qghyxindomtfpjjyvcyx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaHl4aW5kb210ZnBqanl2Y3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ0MDcyNzcsImV4cCI6MjA1OTk4MzI3N30.RuBNSBDl0JFcs0OKIRjmT1ylMiZWEqpfHOCZFpBPBKs';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const redirect = new URLSearchParams(window.location.search).get('redirect') || 'tamm.html';
+
+async function doLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('error-msg');
+
+  if (!email || !password) {
+    err.innerText = 'Please enter email and password.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = 'Verifying...';
+  err.innerText = '';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    err.innerText = 'Invalid credentials. Try again.';
+    btn.disabled = false;
+    btn.innerText = 'Access Orbys';
+    return;
+  }
+
+  window.location.href = redirect;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
