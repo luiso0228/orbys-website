@@ -50,7 +50,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const redirect = new URLSearchParams(window.location.search).get('redirect') || 'tamm.html';
+const redirect = new URLSearchParams(window.location.search).get('redirect') || 'dashboard.html';
 
 async function doLogin() {
   const email = document.getElementById('email').value.trim();
