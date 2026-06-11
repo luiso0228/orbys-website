@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAMM — Production Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #09090e;
+  --surface: #111118;
+  --surface2: #1a1a24;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0eff5;
+  --muted: #6b6b80;
+  --accent: #6c63ff;
+  --accent2: #2dd4bf;
+  --success: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow:hidden}
+
+.shell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Header */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.agent-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.agent-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6c63ff 0%, #2dd4bf 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  color: #fff;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+.agent-avatar::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--success);
+  border: 2px solid var(--bg);
+}
+.agent-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.3px;
+}
+.agent-role {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  font-size: 12px;
+  color: var(--muted);
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100%{opacity:1}
+  50%{opacity:0.4}
+}
+.lang-toggle {
+  display: flex;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.lang-btn {
+  padding: 5px 12px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.lang-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+.logout-btn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+/* Messages */
+.messages {
+  overflow-y: auto;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+.msg {
+  display: flex;
+  gap: 12px;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn {
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.msg.user {
+  flex-direction: row-reverse;
+}
+.msg-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+}
+.msg-avatar.tamm {
+  background: rgba(108,99,255,0.15);
+  color: var(--accent);
+  border: 1px solid rgba(108,99,255,0.2);
+}
+.msg-avatar.user-av {
+  background: rgba(45,212,191,0.1);
+  color: var(--accent2);
+  border: 1px solid rgba(45,212,191,0.15);
+}
+.msg-content {
+  max-width: 72%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.msg-bubble {
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.msg.tamm-msg .msg-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px 14px 14px 14px;
+  color: var(--text);
+}
+.msg.user .msg-bubble {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 14px 4px 14px 14px;
+}
+.msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.msg-time {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+}
+.play-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--accent2);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.play-btn:hover {
+  background: rgba(45,212,191,0.08);
+  border-color: var(--accent2);
+}
+.play-btn svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+.play-btn.playing {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+/* Typing indicator */
+.typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px 14px 14px 14px;
+  width: fit-content;
+}
+.typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: bounce 1.2s infinite;
+}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce {
+  0%,60%,100%{transform:translateY(0)}
+  30%{transform:translateY(-6px)}
+}
+
+/* Quick prompts */
+.quick-prompts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.qp-btn {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+.qp-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Input */
+.input-area {
+  padding: 16px 0 24px;
+  border-top: 1px solid var(--border);
+}
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+.input-wrap {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+.input-wrap:focus-within {
+  border-color: var(--accent);
+}
+#user-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  resize: none;
+  min-height: 20px;
+  max-height: 120px;
+}
+#user-input::placeholder { color: var(--muted); }
+.send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.send-btn:hover { background: #7c73ff; transform: translateY(-1px); }
+.send-btn:disabled { background: var(--surface2); cursor: not-allowed; transform: none; }
+.send-btn svg { width: 18px; height: 18px; fill: #fff; }
+.voice-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+.voice-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.voice-btn.recording { border-color: var(--danger); color: var(--danger); animation: pulse 1s infinite; }
+.voice-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Voice wave */
+.voice-wave {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  padding: 0 4px;
+}
+.voice-wave.active { display: flex; }
+.wave-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent2);
+  animation: wave 0.8s ease infinite;
+}
+.wave-bar:nth-child(1){height:8px;animation-delay:0s}
+.wave-bar:nth-child(2){height:16px;animation-delay:0.1s}
+.wave-bar:nth-child(3){height:12px;animation-delay:0.2s}
+.wave-bar:nth-child(4){height:20px;animation-delay:0.15s}
+.wave-bar:nth-child(5){height:10px;animation-delay:0.05s}
+@keyframes wave {
+  0%,100%{transform:scaleY(0.5)}
+  50%{transform:scaleY(1.2)}
+}
+
+.footer-note {
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 10px;
+  font-family: 'DM Mono', monospace;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header>
+  <div class="agent-id">
+    <div class="agent-avatar">TAMM</div>
+    <div>
+      <div class="agent-name">TAMM</div>
+      <div class="agent-role">Production Intelligence Agent</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="lang-toggle">
+      <button class="lang-btn" onclick="setLang('es',this)">ES</button>
+      <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      Online
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+</header>
+
+<div class="messages" id="messages">
+  <div class="msg tamm-msg">
+    <div class="msg-avatar tamm">T</div>
+    <div class="msg-content">
+      <div class="msg-bubble" id="welcome-msg">Hola. Soy TAMM, tu agente de inteligencia de producción. Puedo analizar OEE, detectar anomalías, revisar órdenes de trabajo y darte diagnósticos en tiempo real. ¿En qué máquina o proceso necesitas enfocarte hoy?</div>
+      <div class="msg-meta">
+        <span class="msg-time" id="welcome-time"></span>
+        <button class="play-btn" onclick="speakText(document.getElementById('welcome-msg').innerText, this)">
+          <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          Escuchar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="quick-prompts" id="quick-prompts">
+    <button class="qp-btn" onclick="sendQuick(this.innerText)">¿Cuál es el OEE de hoy?</button>
+    <button class="qp-btn" onclick="sendQuick(this.innerText)">Órdenes de trabajo abiertas</button>
+    <button class="qp-btn" onclick="sendQuick(this.innerText)">Análisis CNC-01</button>
+    <button class="qp-btn" onclick="sendQuick(this.innerText)">Riesgo de entrega</button>
+  </div>
+  <div class="input-row">
+    <button class="voice-btn" id="voice-btn" onclick="toggleRecording()" title="Hablar con TAMM">
+      <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0V4zM7 11a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V21h-2v-3.07A7 7 0 0 1 5 11h2z"/></svg>
+    </button>
+    <div class="input-wrap">
+      <div class="voice-wave" id="voice-wave">
+        <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      </div>
+      <textarea id="user-input" placeholder="Ask TAMM something..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="footer-note">TAMM · Orbys Manufacturing OS · Powered by Claude + ElevenLabs</div>
+</div>
+
+</div>
+
+<script>
+// ── Supabase Auth + Data ───────────────────────────────────────
+const SUPABASE_URL = 'https://qghyxindomtfpjjyvcyx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaHl4aW5kb210ZnBqanl2Y3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk5OTYsImV4cCI6MjA5NTU1NTk5Nn0.hvc2AyylqmLNVF3rsrvgA8-GtjCpCfvUPztbLTgwTTo';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Auth check
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.href = '/login.html?redirect=tamm.html';
+  }
+})();
+
+async function doLogout() {
+  await sb.auth.signOut();
+  window.location.href = '/login.html';
+}
+
+// ── fetchContext: lee Supabase y arma el contexto para TAMM ───
+async function fetchContext() {
+  let context = '';
+
+  try {
+    // 1. Second Brain — conocimiento de la empresa
+    const { data: conocimiento } = await sb
+      .from('conocimiento_tamm')
+      .select('area, titulo, contenido, tipo')
+      .order('area');
+
+    if (conocimiento && conocimiento.length > 0) {
+      context += '\n\n=== SECOND BRAIN — CONOCIMIENTO DE METALES DEL NORTE S.A. ===\n';
+      conocimiento.forEach(r => {
+        context += `[${r.area.toUpperCase()} · ${r.tipo}] ${r.titulo}: ${r.contenido}\n`;
+      });
+    }
+
+    // 2. Eventos OEE recientes (últimos 10)
+    // Columnas reales: maquina, turno, oee_valor, disponibilidad, rendimiento, calidad, operario, notas, creado_en
+    const { data: oee } = await sb
+      .from('oee_events')
+      .select('*')
+      .order('creado_en', { ascending: false })
+      .limit(10);
+
+    if (oee && oee.length > 0) {
+      context += '\n\n=== EVENTOS OEE RECIENTES ===\n';
+      oee.forEach(r => {
+        context += `Fecha: ${r.creado_en ? new Date(r.creado_en).toLocaleDateString() : 'N/A'} | Máquina: ${r.maquina || 'N/A'} | Turno: ${r.turno || 'N/A'} | OEE: ${r.oee_valor || 'N/A'}% | Disp: ${r.disponibilidad || 'N/A'}% | Rend: ${r.rendimiento || 'N/A'}% | Cal: ${r.calidad || 'N/A'}% | Operario: ${r.operario || 'N/A'} | Notas: ${r.notas || ''}\n`;
+      });
+    }
+
+    // 3. Órdenes de trabajo
+    // Columnas reales: tipo, maquina, descripcion, diagnostico_tamm, prioridad, estado, oee_origen, asignado_a, creado_en
+    const { data: ordenes } = await sb
+      .from('ordenes_trabajo')
+      .select('*')
+      .order('creado_en', { ascending: false })
+      .limit(10);
+
+    if (ordenes && ordenes.length > 0) {
+      context += '\n\n=== ÓRDENES DE TRABAJO ===\n';
+      ordenes.forEach(r => {
+        context += `ID: ${r.id} | Máquina: ${r.maquina || 'N/A'} | Tipo: ${r.tipo || 'N/A'} | Estado: ${r.estado || 'N/A'} | Prioridad: ${r.prioridad || 'N/A'} | Descripción: ${r.descripcion || 'N/A'} | Asignado a: ${r.asignado_a || 'N/A'}\n`;
+      });
+    }
+
+    // 4. Inventario
+    // Columnas reales: nombre, cantidad_actual, cantidad_minima, unidad, proveedor, categoria, activo
+    const { data: inventario } = await sb
+      .from('inventory_items')
+      .select('*')
+      .eq('activo', true)
+      .order('nombre');
+
+    if (inventario && inventario.length > 0) {
+      const bajos = inventario.filter(i => i.cantidad_actual < i.cantidad_minima);
+      context += '\n\n=== INVENTARIO ===\n';
+      inventario.forEach(r => {
+        const alerta = r.cantidad_actual < r.cantidad_minima ? ' ⚠️ BAJO MÍNIMO' : '';
+        context += `${r.nombre}: ${r.cantidad_actual} ${r.unidad || ''} (mín: ${r.cantidad_minima})${alerta} | Proveedor: ${r.proveedor || 'N/A'}\n`;
+      });
+      if (bajos.length > 0) {
+        context += `\nALERTA INVENTARIO: ${bajos.length} item(s) bajo mínimo: ${bajos.map(i => i.nombre).join(', ')}\n`;
+      }
+    }
+
+    // 5. Logs de operario recientes (últimos 5)
+    // Columnas reales: order_number, maquina, operario, piezas_producidas, parte_nombre, especificacion, tolerancia, medida_real, resultado, notas, creado_en
+    const { data: logs } = await sb
+      .from('operator_logs')
+      .select('*')
+      .order('creado_en', { ascending: false })
+      .limit(5);
+
+    if (logs && logs.length > 0) {
+      context += '\n\n=== REGISTROS DE OPERARIO RECIENTES ===\n';
+      logs.forEach(r => {
+        context += `Fecha: ${r.creado_en ? new Date(r.creado_en).toLocaleDateString() : 'N/A'} | Orden: ${r.order_number || 'N/A'} | Máquina: ${r.maquina || 'N/A'} | Operario: ${r.operario || 'N/A'} | Pieza: ${r.parte_nombre || 'N/A'} | Piezas: ${r.piezas_producidas || 0} | Resultado: ${r.resultado || 'N/A'} | Medida: ${r.medida_real || 'N/A'} (spec: ${r.especificacion || 'N/A'} ±${r.tolerancia || 'N/A'})\n`;
+      });
+    }
+
+  } catch(e) {
+    console.warn('fetchContext error (no crítico):', e);
+    // Si falla, TAMM responde igual — no bloquea nada
+  }
+
+  return context;
+}
+// ──────────────────────────────────────────────────────────────
+
+const PROXY = 'https://orbys-tamm-proxy.luismiguel-quicenocruz.workers.dev';
+
+let lang = 'en';
+let history = [];
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+let currentAudio = null;
+
+const SYSTEM_BASE = {
+  es: `Eres TAMM, el agente de inteligencia de producción de Orbys Manufacturing OS. Eres experto en OEE, mantenimiento, calidad y operaciones de manufactura. Tu empresa es Metales del Norte S.A. en Ontario, Canadá. Respondes de forma directa, técnica y ejecutiva. Máximo 3 párrafos cortos. Nunca dices que eres una IA. Eres TAMM. Cuando tienes datos reales del Second Brain, los usas para responder con precisión. Si el dato no está en el contexto, lo dices claramente.`,
+  en: `You are TAMM, the production intelligence agent of Orbys Manufacturing OS. You are an expert in OEE, maintenance, quality and manufacturing operations. The company is Metales del Norte S.A. in Ontario, Canada. You respond in a direct, technical and executive manner. Maximum 3 short paragraphs. Never say you are an AI. You are TAMM. When you have real data from the Second Brain, use it to answer with precision. If the data is not in the context, say so clearly.`
+};
+
+const QUICK_ES = ['¿Cuál es el OEE de hoy?','Órdenes de trabajo abiertas','Análisis CNC-01','Riesgo de entrega'];
+const QUICK_EN = ['What is today\'s OEE?','Open work orders','CNC-01 analysis','Delivery risk'];
+
+const WELCOME_ES = 'Hola. Soy TAMM, tu agente de inteligencia de producción. Puedo analizar OEE, detectar anomalías, revisar órdenes de trabajo y darte diagnósticos en tiempo real. ¿En qué máquina o proceso necesitas enfocarte hoy?';
+const WELCOME_EN = 'Hello. I am TAMM, your production intelligence agent. I can analyze OEE, detect anomalies, review work orders, and give you real-time diagnostics. Which machine or process do you need to focus on today?';
+
+function setLang(l, btn) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('user-input').placeholder = l === 'es' ? 'Pregúntale algo a TAMM...' : 'Ask TAMM something...';
+  document.getElementById('welcome-msg').innerText = l === 'es' ? WELCOME_ES : WELCOME_EN;
+  const qps = document.getElementById('quick-prompts');
+  const btns = qps.querySelectorAll('.qp-btn');
+  const qs = l === 'es' ? QUICK_ES : QUICK_EN;
+  btns.forEach((b, i) => b.innerText = qs[i]);
+}
+
+function getTime() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+document.getElementById('welcome-time').innerText = getTime();
+
+let audioUnlocked = false;
+document.addEventListener('click', function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  const s = new Audio();
+  s.play().catch(()=>{});
+  document.removeEventListener('click', unlockAudio);
+}, {once: true});
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendQuick(text) {
+  document.getElementById('user-input').value = text;
+  sendMessage();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('send-btn').disabled = true;
+
+  appendMsg('user', text);
+  history.push({role: 'user', content: text});
+
+  const typingId = appendTyping();
+
+  try {
+    // ── NUEVO: cargar contexto real de Supabase ──
+    const contextData = await fetchContext();
+    const systemPrompt = SYSTEM_BASE[lang] + (contextData
+      ? `\n\n--- DATOS EN TIEMPO REAL DE METALES DEL NORTE S.A. ---${contextData}\n--- FIN DE DATOS ---`
+      : '');
+    // ─────────────────────────────────────────────
+
+    const res = await fetch(PROXY + '/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 400,
+        system: systemPrompt,
+        messages: history
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Error de conexión.';
+    history.push({role: 'assistant', content: reply});
+
+    removeTyping(typingId);
+    appendMsg('tamm', reply, true);
+  } catch(e) {
+    removeTyping(typingId);
+    appendMsg('tamm', 'Error de conexión con TAMM. Verifica tu red.');
+  }
+
+  document.getElementById('send-btn').disabled = false;
+}
+
+function appendMsg(role, text, withPlay = false) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role === 'user' ? 'user' : 'tamm-msg'}`;
+
+  const avatarDiv = document.createElement('div');
+  avatarDiv.className = `msg-avatar ${role === 'user' ? 'user-av' : 'tamm'}`;
+  avatarDiv.innerText = role === 'user' ? 'U' : 'T';
+
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'msg-content';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.innerText = text;
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+
+  const time = document.createElement('span');
+  time.className = 'msg-time';
+  time.innerText = getTime();
+  meta.appendChild(time);
+
+  if (withPlay) {
+    const playBtn = document.createElement('button');
+    playBtn.className = 'play-btn';
+    playBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> ${lang === 'es' ? 'Escuchar' : 'Listen'}`;
+    playBtn.onclick = () => speakText(text, playBtn);
+    meta.appendChild(playBtn);
+  }
+
+  contentDiv.appendChild(bubble);
+  contentDiv.appendChild(meta);
+  div.appendChild(avatarDiv);
+  div.appendChild(contentDiv);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendTyping() {
+  const msgs = document.getElementById('messages');
+  const id = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg tamm-msg';
+  div.id = id;
+  div.innerHTML = `<div class="msg-avatar tamm">T</div><div class="msg-content"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+async function speakText(text, btn) {
+  if (window._tammAudio) {
+    window._tammAudio.pause();
+    window._tammAudio = null;
+    document.querySelectorAll('.play-btn').forEach(b => {
+      b.classList.remove('playing');
+      b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> ${lang === 'es' ? 'Escuchar' : 'Listen'}`;
+    });
+    return;
+  }
+
+  btn.classList.add('playing');
+  btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> ${lang === 'es' ? 'Cargando...' : 'Loading...'}`;
+
+  try {
+    const res = await fetch(PROXY + '/elevenlabs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text })
+    });
+
+    if (!res.ok) throw new Error('ElevenLabs error ' + res.status);
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    window._tammAudio = audio;
+
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> ${lang === 'es' ? 'Detener' : 'Stop'}`;
+
+    audio.onended = () => {
+      window._tammAudio = null;
+      URL.revokeObjectURL(url);
+      btn.classList.remove('playing');
+      btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> ${lang === 'es' ? 'Escuchar' : 'Listen'}`;
+    };
+
+    await audio.play();
+
+  } catch(e) {
+    console.error('Audio error:', e);
+    window._tammAudio = null;
+    btn.classList.remove('playing');
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> ${lang === 'es' ? 'Escuchar' : 'Listen'}`;
+  }
+}
+
+function toggleRecording() {
+  const btn = document.getElementById('voice-btn');
+  const wave = document.getElementById('voice-wave');
+  const input = document.getElementById('user-input');
+
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Speech recognition not supported. Use Chrome or Safari.');
+    return;
+  }
+
+  if (isRecording) {
+    if (window._tammRecognition) window._tammRecognition.stop();
+    isRecording = false;
+    btn.classList.remove('recording');
+    wave.classList.remove('active');
+    input.style.display = '';
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+  window._tammRecognition = recognition;
+
+  recognition.lang = lang === 'es' ? 'es-MX' : 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    btn.classList.add('recording');
+    wave.classList.add('active');
+    input.style.display = 'none';
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    input.style.display = '';
+    input.value = transcript;
+    autoResize(input);
+    isRecording = false;
+    btn.classList.remove('recording');
+    wave.classList.remove('active');
+    sendMessage();
+  };
+
+  recognition.onerror = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    wave.classList.remove('active');
+    input.style.display = '';
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+    wave.classList.remove('active');
+    input.style.display = '';
+  };
+
+  recognition.start();
+}
+</script>
+</body>
+</html>
