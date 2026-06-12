@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbys — Manufacturing OS Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#09090e;--surface:#111118;--s2:#16161f;--s3:#1c1c28;--border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.11);--text:#f0eff5;--muted:#6b6b82;--muted2:#9898b0;--accent:#6c63ff;--a2:#2dd4bf;--a3:#f472b6;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+.app{display:grid;grid-template-columns:240px 1fr;grid-template-rows:64px 1fr;min-height:100vh}
+/* TOPBAR */
+.topbar{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border);background:rgba(9,9,14,0.9);backdrop-filter:blur(16px);position:sticky;top:0;z-index:50}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;letter-spacing:-0.5px;background:linear-gradient(135deg,#fff 0%,#a5a0ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-weight:400;opacity:0.4}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.greeting-pill{display:flex;align-items:center;gap:7px;padding:5px 13px;border-radius:100px;background:var(--s2);border:1px solid var(--border2);font-size:13px}
+.greeting-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.time-display{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.audio-btn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.audio-btn:hover{border-color:var(--a2);color:var(--a2)}
+.audio-btn.active{border-color:var(--a2);color:var(--a2);background:rgba(45,212,191,0.08)}
+.audio-btn.muted{border-color:var(--muted);color:var(--muted)}
+.logout-btn{padding:5px 13px;border-radius:8px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);padding:20px 0;background:var(--surface);overflow-y:auto}
+.sidebar-section{padding:0 14px;margin-bottom:6px}
+.sidebar-label{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:0 8px;margin-bottom:4px;margin-top:18px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;font-size:13px;color:var(--muted2);cursor:pointer;transition:all 0.15s;border:1px solid transparent;text-decoration:none}
+.nav-item:hover{background:var(--s2);color:var(--text)}
+.nav-item.active{background:rgba(108,99,255,0.1);border-color:rgba(108,99,255,0.18);color:var(--text)}
+.nav-item .nav-icon{font-size:15px;width:20px;text-align:center}
+.nav-item .nav-badge{margin-left:auto;padding:2px 7px;border-radius:100px;font-size:10px;font-family:'DM Mono',monospace;background:rgba(239,68,68,0.15);color:var(--danger)}
+.nav-item .nav-badge.ok{background:rgba(34,197,94,0.1);color:var(--ok)}
+.nav-item .nav-badge.warn{background:rgba(245,158,11,0.1);color:var(--warn)}
+.agent-block{margin:0 14px 6px;padding:11px;border-radius:11px;background:var(--s2);border:1px solid var(--border)}
+.agent-block-title{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:9px}
+.agent-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px}
+.agent-row-left{display:flex;align-items:center;gap:7px}
+.agent-dot{width:6px;height:6px;border-radius:50%}
+.agent-dot.on{background:var(--ok)}
+.agent-dot.partial{background:var(--warn)}
+.agent-status-label{font-size:10px;color:var(--muted)}
+/* MAIN */
+.main{overflow-y:auto;padding:24px 24px 48px}
+/* HERO */
+.hero{margin-bottom:24px}
+.hero-eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--a2);margin-bottom:7px}
+.hero-title{font-family:'Syne',sans-serif;font-size:clamp(20px,3vw,30px);font-weight:700;letter-spacing:-0.5px;line-height:1.2;margin-bottom:5px}
+.hero-title em{font-style:normal;background:linear-gradient(135deg,var(--accent),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:13px;color:var(--muted);font-style:italic;min-height:20px;transition:color 0.3s}
+.hero-sub.speaking{color:var(--a2)}
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:16px 18px;position:relative;overflow:hidden;transition:border-color 0.2s}
+.kpi-card:hover{border-color:var(--border2)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:13px 13px 0 0}
+.kpi-card.green::before{background:var(--ok)}
+.kpi-card.amber::before{background:var(--warn)}
+.kpi-card.red::before{background:var(--danger)}
+.kpi-card.blue::before{background:var(--accent)}
+.kpi-card.teal::before{background:var(--a2)}
+.kpi-card.pink::before{background:var(--a3)}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px}
+.kpi-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:700;line-height:1;margin-bottom:3px}
+.kpi-value.green{color:var(--ok)}.kpi-value.amber{color:var(--warn)}.kpi-value.red{color:var(--danger)}.kpi-value.blue{color:var(--accent)}.kpi-value.teal{color:var(--a2)}.kpi-value.pink{color:var(--a3)}
+.kpi-sub{font-size:11px;color:var(--muted)}
+.kpi-delta{font-size:11px;margin-top:3px;font-family:'DM Mono',monospace}
+.kpi-delta.up{color:var(--ok)}.kpi-delta.down{color:var(--danger)}.kpi-delta.flat{color:var(--muted)}
+/* SALES SECTION */
+.sales-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:18px}
+.sales-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sales-title{font-family:'Syne',sans-serif;font-weight:600;font-size:14px}
+.sales-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.sales-stat{text-align:center;padding:12px;background:var(--s2);border-radius:10px;border:1px solid var(--border)}
+.sales-stat-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;line-height:1;margin-bottom:4px}
+.sales-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em}
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.panel-title{font-family:'Syne',sans-serif;font-weight:600;font-size:13px}
+.panel-tag{font-size:9px;padding:2px 9px;border-radius:100px;font-family:'DM Mono',monospace}
+.panel-tag.live{background:rgba(34,197,94,0.1);color:var(--ok);border:1px solid rgba(34,197,94,0.2)}
+.panel-tag.warn{background:rgba(245,158,11,0.1);color:var(--warn);border:1px solid rgba(245,158,11,0.2)}
+.panel-body{padding:14px 18px}
+/* ALERT ITEMS */
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.alert-item:last-child{border-bottom:none}
+.alert-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.alert-dot.critical{background:var(--danger);box-shadow:0 0 6px rgba(239,68,68,0.5)}
+.alert-dot.high{background:var(--warn)}
+.alert-dot.medium{background:var(--accent)}
+.alert-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.alert-meta{font-size:11px;color:var(--muted)}
+.alert-tags{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 7px;border-radius:100px;border:1px solid}
+.tag.prod{background:rgba(108,99,255,0.1);color:var(--accent);border-color:rgba(108,99,255,0.2)}
+.tag.maint{background:rgba(245,158,11,0.1);color:var(--warn);border-color:rgba(245,158,11,0.2)}
+.tag.fin{background:rgba(45,212,191,0.1);color:var(--a2);border-color:rgba(45,212,191,0.2)}
+.tag.qual{background:rgba(34,197,94,0.1);color:var(--ok);border-color:rgba(34,197,94,0.2)}
+.tag.crit{background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.2)}
+/* ALERT ACTIONS */
+.alert-analysis{margin-top:9px;padding:9px 11px;background:var(--s2);border:1px solid var(--border2);border-radius:9px;font-size:12px;line-height:1.6;color:var(--muted2);display:none}
+.alert-analysis.visible{display:block}
+.alert-analysis-header{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--a2);margin-bottom:5px}
+.alert-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.action-btn{display:flex;align-items:center;gap:4px;padding:4px 11px;border-radius:7px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;border:1px solid;font-weight:500}
+.action-btn.primary{background:rgba(108,99,255,0.12);border-color:rgba(108,99,255,0.3);color:var(--accent)}
+.action-btn.primary:hover{background:rgba(108,99,255,0.2)}
+.action-btn.warn{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);color:var(--warn)}
+.action-btn.teal{background:rgba(45,212,191,0.1);border-color:rgba(45,212,191,0.3);color:var(--a2)}
+.action-btn.ghost{background:transparent;border-color:var(--border2);color:var(--muted)}
+.action-btn:disabled{opacity:0.5;cursor:not-allowed}
+.analyze-btn{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:10px;cursor:pointer;margin-top:5px;font-family:'DM Sans',sans-serif;transition:all 0.15s;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);color:var(--accent)}
+.analyze-btn:hover{background:rgba(108,99,255,0.15)}
+.analyze-btn.loading{opacity:0.6;cursor:wait}
+.action-result{margin-top:7px;padding:7px 11px;border-radius:7px;font-size:11px;display:none}
+.action-result.visible{display:block}
+/* INV ITEMS */
+.inv-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.inv-item:last-child{border-bottom:none}
+.inv-name{font-weight:500;margin-bottom:2px}
+.inv-qty{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.inv-badge{font-size:10px;padding:2px 9px;border-radius:100px;font-family:'DM Mono',monospace;flex-shrink:0}
+.inv-badge.out{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2)}
+.inv-badge.low{background:rgba(245,158,11,0.12);color:var(--warn);border:1px solid rgba(245,158,11,0.2)}
+.inv-badge.ok{background:rgba(34,197,94,0.1);color:var(--ok);border:1px solid rgba(34,197,94,0.2)}
+/* ORDER ITEMS */
+.order-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.order-item:last-child{border-bottom:none}
+.order-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:2px}
+.order-desc{font-weight:500}
+.order-status{font-size:10px;padding:2px 9px;border-radius:100px;border:1px solid;flex-shrink:0}
+.order-status.open{background:rgba(108,99,255,0.1);color:var(--accent);border-color:rgba(108,99,255,0.2)}
+.order-status.process{background:rgba(245,158,11,0.1);color:var(--warn);border-color:rgba(245,158,11,0.2)}
+.order-status.done{background:rgba(34,197,94,0.1);color:var(--ok);border-color:rgba(34,197,94,0.2)}
+/* CHAT */
+.chat-panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;height:460px;margin-bottom:16px}
+.chat-header{display:flex;align-items:center;gap:11px;padding:13px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-avatar{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--a2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:11px;color:#fff;position:relative;flex-shrink:0}
+.chat-avatar::after{content:'';position:absolute;bottom:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:var(--ok);border:2px solid var(--surface)}
+.chat-info .chat-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+.chat-info .chat-sub{font-size:11px;color:var(--muted)}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.cmsg{display:flex;gap:7px}
+.cmsg.user{flex-direction:row-reverse}
+.cmsg-av{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:9px;flex-shrink:0}
+.cmsg-av.t{background:rgba(108,99,255,0.15);color:var(--accent);border:1px solid rgba(108,99,255,0.2)}
+.cmsg-av.u{background:rgba(45,212,191,0.1);color:var(--a2);border:1px solid rgba(45,212,191,0.15)}
+.cmsg-bubble{max-width:82%;padding:8px 12px;border-radius:11px;font-size:13px;line-height:1.55}
+.cmsg.tamm-msg .cmsg-bubble{background:var(--s2);border:1px solid var(--border);border-radius:3px 11px 11px 11px}
+.cmsg.user .cmsg-bubble{background:var(--accent);color:#fff;border-radius:11px 3px 11px 11px}
+.cmsg-meta{display:flex;align-items:center;gap:5px;margin-top:3px}
+.cmsg-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)}
+.cmsg-play{display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--a2);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.cmsg-play svg{width:8px;height:8px;fill:currentColor}
+.cmsg-play.playing{color:var(--warn);border-color:var(--warn)}
+.typing-dots{display:flex;gap:3px;align-items:center;padding:9px 12px;background:var(--s2);border:1px solid var(--border);border-radius:3px 11px 11px 11px;width:fit-content}
+.typing-dots span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:tdot 1.2s infinite}
+.typing-dots span:nth-child(2){animation-delay:0.2s}
+.typing-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.chat-input-row{display:flex;gap:7px;padding:11px 14px;border-top:1px solid var(--border);flex-shrink:0}
+.chat-voice-btn{width:34px;height:34px;border-radius:9px;background:transparent;border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;color:var(--muted)}
+.chat-voice-btn:hover{border-color:var(--a2);color:var(--a2)}
+.chat-voice-btn.recording{border-color:var(--danger);color:var(--danger);animation:blink 1s infinite}
+.chat-voice-btn svg{width:14px;height:14px;fill:currentColor}
+.chat-input{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:9px;padding:8px 13px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s}
+.chat-input:focus{border-color:var(--accent)}
+.chat-input::placeholder{color:var(--muted)}
+.chat-send{width:34px;height:34px;border-radius:9px;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.chat-send:hover{background:#7c73ff}
+.chat-send:disabled{background:var(--s2);cursor:not-allowed}
+.chat-send svg{width:14px;height:14px;fill:#fff}
+.qp-row{display:flex;gap:5px;flex-wrap:wrap;padding:0 14px 9px}
+.qp{padding:4px 10px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+.qp:hover{border-color:var(--accent);color:var(--text)}
+.empty{text-align:center;padding:24px 14px;color:var(--muted);font-size:13px}
+.empty-icon{font-size:26px;margin-bottom:7px;opacity:0.4}
+/* SECTION ANCHOR */
+.section-anchor{scroll-margin-top:80px}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{display:none}.kpi-grid{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}.sales-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr}.main{padding:14px 14px 40px}.sales-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">Orbys<span>.ai</span></div>
+  <div class="topbar-right">
+    <div class="greeting-pill"><div class="dot"></div><span id="top-greeting">Loading...</span></div>
+    <div class="time-display" id="clock">--:--</div>
+    <button class="audio-btn" id="stop-audio-btn" onclick="stopAllAudio()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Stop
+    </button>
+    <button class="audio-btn active" id="tata-toggle-btn" onclick="toggleTata()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0V4zM7 11a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V21h-2v-3.07A7 7 0 0 1 5 11h2z"/></svg> TATA ON
+    </button>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+</header>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-section">
+    <div class="nav-item active" onclick="scrollToSection('hero-section')">
+      <span class="nav-icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="scrollToSection('alerts-section')">
+      <span class="nav-icon">🚨</span> Alerts
+      <span class="nav-badge" id="sb-alerts">–</span>
+    </div>
+    <div class="nav-item" onclick="scrollToSection('inventory-section')">
+      <span class="nav-icon">📦</span> Inventory
+      <span class="nav-badge warn" id="sb-inv">–</span>
+    </div>
+    <div class="nav-item" onclick="scrollToSection('orders-section')">
+      <span class="nav-icon">📋</span> Work Orders
+      <span class="nav-badge ok" id="sb-orders">–</span>
+    </div>
+    <div class="nav-item" onclick="scrollToSection('sales-section')">
+      <span class="nav-icon">💰</span> Sales
+      <span class="nav-badge ok" id="sb-sales">–</span>
+    </div>
+    <div class="nav-item" onclick="scrollToSection('tamm-section')">
+      <span class="nav-icon">🏭</span> TAMM
+      <span class="nav-badge ok">ON</span>
+    </div>
+  </div>
+  <div class="sidebar-label" style="padding:0 22px">Agents</div>
+  <div class="agent-block">
+    <div class="agent-block-title">Active agents</div>
+    <div class="agent-row"><div class="agent-row-left"><div class="agent-dot on"></div><span>TAMM</span></div><span class="agent-status-label">Production</span></div>
+    <div class="agent-row"><div class="agent-row-left"><div class="agent-dot on"></div><span>NANA</span></div><span class="agent-status-label">Sales</span></div>
+    <div class="agent-row"><div class="agent-row-left"><div class="agent-dot on"></div><span>GUMM</span></div><span class="agent-status-label">Finance</span></div>
+    <div class="agent-row"><div class="agent-row-left"><div class="agent-dot on"></div><span>AMM</span></div><span class="agent-status-label">Quality</span></div>
+    <div class="agent-row"><div class="agent-row-left"><div class="agent-dot partial"></div><span>TRPPP</span></div><span class="agent-status-label">Marketing</span></div>
+    <div class="agent-row"><div class="agent-row-left"><div class="agent-dot on"></div><span>TATA</span></div><span class="agent-status-label">Leadership</span></div>
+  </div>
+  <div class="sidebar-label" style="padding:0 22px">Company</div>
+  <div style="padding:0 22px">
+    <div style="font-size:12px;color:var(--muted);line-height:1.9;padding:4px 0">
+      <div id="sb-company">Dinser Manufacturing</div>
+      <div>Mississauga, Ontario</div>
+      <div style="color:var(--a2);margin-top:3px" id="sb-date">–</div>
+    </div>
+  </div>
+</aside>
+<!-- MAIN -->
+<main class="main">
+  <!-- Hero -->
+  <div class="hero section-anchor" id="hero-section">
+    <div class="hero-eyebrow">Orbys Manufacturing OS</div>
+    <h1 class="hero-title" id="hero-title">Good morning, <em id="hero-name">–</em></h1>
+    <p class="hero-sub" id="hero-sub">Loading your company data...</p>
+  </div>
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-label">OEE — Last Event</div>
+      <div class="kpi-value blue" id="kpi-oee">–</div>
+      <div class="kpi-sub" id="kpi-oee-sub">Loading...</div>
+    </div>
+    <div class="kpi-card amber">
+      <div class="kpi-label">Open Work Orders</div>
+      <div class="kpi-value amber" id="kpi-orders">–</div>
+      <div class="kpi-sub" id="kpi-orders-sub">Loading...</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Inventory Alerts</div>
+      <div class="kpi-value red" id="kpi-inv">–</div>
+      <div class="kpi-sub" id="kpi-inv-sub">Loading...</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Sales This Month</div>
+      <div class="kpi-value teal" id="kpi-sales">–</div>
+      <div class="kpi-delta" id="kpi-sales-delta">Loading...</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Active Agents</div>
+      <div class="kpi-value green">6</div>
+      <div class="kpi-sub">Running 24/7</div>
+    </div>
+  </div>
+  <!-- Sales Section -->
+  <div class="sales-section section-anchor" id="sales-section">
+    <div class="sales-header">
+      <span style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px">💰 Sales Performance</span>
+      <span class="panel-tag live">LIVE</span>
+    </div>
+    <div class="sales-grid" id="sales-grid">
+      <div class="sales-stat"><div class="sales-stat-val teal" id="s-month">–</div><div class="sales-stat-label">This Month</div></div>
+      <div class="sales-stat"><div class="sales-stat-val" id="s-prev" style="color:var(--muted2)">–</div><div class="sales-stat-label">Last Month</div></div>
+      <div class="sales-stat"><div class="sales-stat-val" id="s-delta">–</div><div class="sales-stat-label">vs Last Month</div></div>
+      <div class="sales-stat"><div class="sales-stat-val" id="s-pipeline" style="color:var(--accent)">–</div><div class="sales-stat-label">Pipeline Open</div></div>
+    </div>
+  </div>
+  <!-- Alerts + Inventory -->
+  <div class="two-col">
+    <div class="panel section-anchor" id="alerts-section">
+      <div class="panel-header">
+        <span class="panel-title">🚨 Active Alerts</span>
+        <span class="panel-tag live" id="alerts-count-tag">LIVE</span>
+      </div>
+      <div class="panel-body" id="alerts-body">
+        <div class="empty"><div class="empty-icon">✅</div>No active alerts</div>
+      </div>
+    </div>
+    <div class="panel section-anchor" id="inventory-section">
+      <div class="panel-header">
+        <span class="panel-title">📦 Inventory Status</span>
+        <span class="panel-tag warn" id="inv-count-tag">CHECKING</span>
+      </div>
+      <div class="panel-body" id="inventory-body">
+        <div class="empty"><div class="empty-icon">📦</div>Loading inventory...</div>
+      </div>
+    </div>
+  </div>
+  <!-- Work Orders + Logs -->
+  <div class="two-col">
+    <div class="panel section-anchor" id="orders-section">
+      <div class="panel-header">
+        <span class="panel-title">📋 Work Orders</span>
+        <span class="panel-tag live">LIVE</span>
+      </div>
+      <div class="panel-body" id="orders-body">
+        <div class="empty"><div class="empty-icon">📋</div>Loading orders...</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🔧 Operator Logs</span>
+        <span class="panel-tag live">LIVE</span>
+      </div>
+      <div class="panel-body" id="logs-body">
+        <div class="empty"><div class="empty-icon">🔧</div>Loading logs...</div>
+      </div>
+    </div>
+  </div>
+  <!-- TAMM Chat -->
+  <div class="section-anchor" id="tamm-section">
+    <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:14px;margin-bottom:11px">🏭 Ask TAMM — Production Intelligence</div>
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="chat-avatar">T</div>
+        <div class="chat-info">
+          <div class="chat-name">TAMM</div>
+          <div class="chat-sub">Connected to Dinser Manufacturing · Second Brain active</div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="cmsg tamm-msg">
+          <div class="cmsg-av t">T</div>
+          <div>
+            <div class="cmsg-bubble" id="chat-welcome">Hello. I'm TAMM, your production intelligence agent. I have access to your real-time data. What do you need to know?</div>
+            <div class="cmsg-meta">
+              <span class="cmsg-time" id="chat-welcome-time"></span>
+              <button class="cmsg-play" onclick="speakText(document.getElementById('chat-welcome').innerText,this)">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Listen
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="qp-row">
+        <button class="qp" onclick="chatSendQuick(this.innerText)">Today's OEE?</button>
+        <button class="qp" onclick="chatSendQuick(this.innerText)">Open work orders</button>
+        <button class="qp" onclick="chatSendQuick(this.innerText)">Inventory alerts</button>
+        <button class="qp" onclick="chatSendQuick(this.innerText)">Sales this month</button>
+        <button class="qp" onclick="chatSendQuick(this.innerText)">Production summary</button>
+      </div>
+      <div class="chat-input-row">
+        <button class="chat-voice-btn" id="dash-voice-btn" onclick="toggleDashRecording()">
+          <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0V4zM7 11a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V21h-2v-3.07A7 7 0 0 1 5 11h2z"/></svg>
+        </button>
+        <input class="chat-input" id="chat-input" placeholder="Ask TAMM anything..." onkeydown="if(event.key==='Enter')chatSend()">
+        <button class="chat-send" id="chat-send-btn" onclick="chatSend()">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+const SUPABASE_URL='https://qghyxindomtfpjjyvcyx.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaHl4aW5kb210ZnBqanl2Y3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk5OTYsImV4cCI6MjA5NTU1NTk5Nn0.hvc2AyylqmLNVF3rsrvgA8-GtjCpCfvUPztbLTgwTTo';
+const PROXY='https://orbys-tamm-proxy.luismiguel-quicenocruz.workers.dev';
+const CLIENT_NAME='Mirko';
+const COMPANY_NAME='Dinser Manufacturing';
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+// AUTH
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='/login.html?redirect=dashboard.html';return;}
+  initDashboard();
+})();
+async function doLogout(){await sb.auth.signOut();window.location.href='/login.html';}
+
+// CLOCK
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+setInterval(updateClock,1000);updateClock();
+
+// SCROLL TO SECTION
+function scrollToSection(id){
+  const el=document.getElementById(id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const map={'hero-section':0,'alerts-section':1,'inventory-section':2,'orders-section':3,'sales-section':4,'tamm-section':5};
+  const idx=map[id];
+  if(idx!==undefined){
+    const items=document.querySelectorAll('.nav-item');
+    if(items[idx])items[idx].classList.add('active');
+  }
+}
+
+// GREETING
+function getGreeting(){const h=new Date().getHours();if(h<12)return'Good morning';if(h<18)return'Good afternoon';return'Good evening';}
+
+function initDashboard(){
+  const greeting=getGreeting();
+  const dateStr=new Date().toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('hero-title').innerHTML=`${greeting}, <em>${CLIENT_NAME}</em>`;
+  document.getElementById('hero-sub').textContent=`${COMPANY_NAME} · ${dateStr}`;
+  document.getElementById('top-greeting').textContent=`${greeting}, ${CLIENT_NAME}`;
+  document.getElementById('sb-date').textContent=dateStr;
+  document.getElementById('chat-welcome-time').textContent=getTime();
+  loadAllData();
+}
+
+// LOAD ALL DATA — sin llamar TATA automáticamente en refresh
+async function loadAllData(){
+  await Promise.all([loadOEE(),loadOrders(),loadInventory(),loadAlerts(),loadLogs(),loadSales()]);
+}
+
+// Solo en el init inicial llamamos TATA
+async function initAndGreet(){
+  await loadAllData();
+  await tataVoiceGreeting();
+}
+
+// AUTO REFRESH — solo datos, sin audio
+setInterval(()=>{
+  loadOEE();loadOrders();loadInventory();loadAlerts();loadLogs();loadSales();
+},120000);
+
+// SALES
+async function loadSales(){
+  try{
+    const now=new Date();
+    const thisMonthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+    const prevMonthStart=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString();
+    const prevMonthEnd=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+
+    const[thisRes,prevRes,pipelineRes]=await Promise.all([
+      sb.from('cotizaciones').select('valor_total').eq('estado','aprobada').gte('fecha_aprobacion',thisMonthStart),
+      sb.from('cotizaciones').select('valor_total').eq('estado','aprobada').gte('fecha_aprobacion',prevMonthStart).lt('fecha_aprobacion',prevMonthEnd),
+      sb.from('cotizaciones').select('valor_total').eq('estado','generada').eq('respondio',false)
+    ]);
+
+    const thisMonth=thisRes.data?.reduce((s,r)=>s+(parseFloat(r.valor_total)||0),0)||0;
+    const prevMonth=prevRes.data?.reduce((s,r)=>s+(parseFloat(r.valor_total)||0),0)||0;
+    const pipeline=pipelineRes.data?.reduce((s,r)=>s+(parseFloat(r.valor_total)||0),0)||0;
+
+    const fmt=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+n.toFixed(0);
+    document.getElementById('kpi-sales').textContent=fmt(thisMonth);
+    document.getElementById('s-month').textContent=fmt(thisMonth);
+    document.getElementById('s-prev').textContent=fmt(prevMonth);
+    document.getElementById('s-pipeline').textContent=fmt(pipeline);
+    document.getElementById('sb-sales').textContent=fmt(thisMonth);
+
+    if(prevMonth>0){
+      const delta=((thisMonth-prevMonth)/prevMonth*100).toFixed(1);
+      const el=document.getElementById('s-delta');
+      const kpiDelta=document.getElementById('kpi-sales-delta');
+      if(delta>0){
+        el.textContent='▲ '+delta+'%';el.style.color='var(--ok)';
+        kpiDelta.textContent='▲ '+delta+'% vs last month';kpiDelta.className='kpi-delta up';
+      }else if(delta<0){
+        el.textContent='▼ '+Math.abs(delta)+'%';el.style.color='var(--danger)';
+        kpiDelta.textContent='▼ '+Math.abs(delta)+'% vs last month';kpiDelta.className='kpi-delta down';
+      }else{
+        el.textContent='→ 0%';el.style.color='var(--muted)';
+        kpiDelta.textContent='No change vs last month';kpiDelta.className='kpi-delta flat';
+      }
+    }else{
+      document.getElementById('s-delta').textContent='No prev data';
+      document.getElementById('s-delta').style.color='var(--muted)';
+      document.getElementById('kpi-sales-delta').textContent='First month of data';
+      document.getElementById('kpi-sales-delta').className='kpi-delta flat';
+    }
+  }catch(e){console.warn('loadSales error:',e);}
+}
+
+// OEE
+async function loadOEE(){
+  try{
+    const{data}=await sb.from('oee_events').select('*').order('creado_en',{ascending:false}).limit(1);
+    if(data&&data.length>0){
+      const ev=data[0];const val=parseFloat(ev.oee_valor)||0;const pct=val+'%';
+      const color=val>=85?'green':val>=75?'amber':'red';
+      document.getElementById('kpi-oee').textContent=pct;
+      document.getElementById('kpi-oee').className='kpi-value '+color;
+      document.getElementById('kpi-oee-sub').textContent=`${ev.maquina||'N/A'} · ${ev.creado_en?new Date(ev.creado_en).toLocaleDateString():''}`;
+      document.getElementById('kpi-oee').closest('.kpi-card').className='kpi-card '+color;
+    }else{document.getElementById('kpi-oee').textContent='No data';}
+  }catch(e){}
+}
+
+// ORDERS
+async function loadOrders(){
+  try{
+    const{data}=await sb.from('ordenes_trabajo').select('*').order('creado_en',{ascending:false}).limit(8);
+    if(!data||data.length===0){
+      document.getElementById('orders-body').innerHTML='<div class="empty"><div class="empty-icon">✅</div>No open work orders</div>';
+      document.getElementById('kpi-orders').textContent='0';
+      document.getElementById('sb-orders').textContent='0';return;
+    }
+    document.getElementById('kpi-orders').textContent=data.length;
+    document.getElementById('kpi-orders-sub').textContent=`${data.length} order(s) on record`;
+    document.getElementById('sb-orders').textContent=data.length;
+    let html='';
+    data.forEach(o=>{
+      const status=o.estado||'open';
+      const cls=status.toLowerCase().includes('proceso')||status.toLowerCase().includes('progress')?'process':status.toLowerCase().includes('complet')||status.toLowerCase().includes('cerr')||status.toLowerCase().includes('done')?'done':'open';
+      html+=`<div class="order-item"><div><div class="order-id">${o.maquina||'N/A'} · ${o.tipo||'N/A'}</div><div class="order-desc">${o.descripcion||'Work order'}</div></div><span class="order-status ${cls}">${status}</span></div>`;
+    });
+    document.getElementById('orders-body').innerHTML=html;
+  }catch(e){document.getElementById('orders-body').innerHTML='<div class="empty">Error loading orders</div>';}
+}
+
+// INVENTORY
+async function loadInventory(){
+  try{
+    const{data}=await sb.from('inventory_items').select('*').eq('activo',true).order('nombre');
+    if(!data||data.length===0){document.getElementById('inventory-body').innerHTML='<div class="empty"><div class="empty-icon">📦</div>No inventory data</div>';return;}
+    const bajos=data.filter(i=>i.cantidad_actual<i.cantidad_minima);
+    document.getElementById('kpi-inv').textContent=bajos.length;
+    document.getElementById('kpi-inv-sub').textContent=bajos.length>0?`${bajos.length} item(s) below minimum`:'All items OK';
+    document.getElementById('inv-count-tag').textContent=bajos.length>0?`${bajos.length} ALERTS`:'ALL OK';
+    document.getElementById('sb-inv').textContent=bajos.length;
+    let html='';
+    data.forEach(i=>{
+      const isOut=i.cantidad_actual===0;const isLow=i.cantidad_actual<i.cantidad_minima;
+      const bc=isOut?'out':isLow?'low':'ok';const bt=isOut?'Out of stock':isLow?'Low':'OK';
+      html+=`<div class="inv-item"><div><div class="inv-name">${i.nombre}</div><div class="inv-qty">${i.cantidad_actual} / ${i.cantidad_minima} ${i.unidad||''} min</div></div><span class="inv-badge ${bc}">${bt}</span></div>`;
+    });
+    document.getElementById('inventory-body').innerHTML=html;
+  }catch(e){document.getElementById('inventory-body').innerHTML='<div class="empty">Error loading inventory</div>';}
+}
+
+// ALERTS
+async function loadAlerts(){
+  try{
+    const alerts=[];
+    const{data:oee}=await sb.from('oee_events').select('*').order('creado_en',{ascending:false}).limit(5);
+    if(oee)oee.forEach(ev=>{const val=parseFloat(ev.oee_valor)||0;if(val>0&&val<85)alerts.push({id:`oee-${ev.id}`,title:`OEE below target — ${val}% on ${ev.maquina||'N/A'}`,meta:`Shift ${ev.turno||'N/A'} · ${ev.creado_en?new Date(ev.creado_en).toLocaleDateString():''} · ${(ev.notas||'').substring(0,80)}`,severity:val<75?'critical':'high',tags:['prod'],type:'oee',data:ev});});
+    const{data:inv}=await sb.from('inventory_items').select('*').eq('activo',true);
+    if(inv)inv.filter(i=>i.cantidad_actual<i.cantidad_minima).forEach(i=>alerts.push({id:`inv-${i.id}`,title:`Low inventory — ${i.nombre}`,meta:`${i.cantidad_actual} ${i.unidad||''} remaining (min: ${i.cantidad_minima}) · ${i.proveedor||'N/A'}`,severity:i.cantidad_actual===0?'critical':'high',tags:['maint'],type:'inventory',data:i}));
+    const{data:logs}=await sb.from('operator_logs').select('*').order('creado_en',{ascending:false}).limit(10);
+    if(logs){const noks=logs.filter(l=>l.resultado&&l.resultado.toUpperCase().includes('NOK'));if(noks.length>0)alerts.push({id:`nok-${noks[0].id}`,title:`${noks.length} NOK part(s) detected`,meta:`Latest: ${noks[0].parte_nombre||'N/A'} on ${noks[0].maquina||'N/A'} by ${noks[0].operario||'N/A'}`,severity:'high',tags:['qual'],type:'quality',data:noks[0]});}
+    document.getElementById('sb-alerts').textContent=alerts.length;
+    document.getElementById('alerts-count-tag').textContent=alerts.length>0?`${alerts.length} ACTIVE`:'ALL CLEAR';
+    if(alerts.length===0){document.getElementById('alerts-body').innerHTML='<div class="empty"><div class="empty-icon">✅</div>No active alerts — all systems normal</div>';return;}
+    let html='';
+    alerts.forEach(a=>{
+      const tagHtml=a.tags.map(t=>`<span class="tag ${t==='prod'?'prod':t==='maint'?'maint':t==='qual'?'qual':'prod'}">${t==='prod'?'Production':t==='maint'?'Inventory':'Quality'}</span>`).join('');
+      const sevLabel=a.severity==='critical'?'Critical':a.severity==='high'?'High':'Medium';
+      let actionBtns='';
+      if(a.type==='oee')actionBtns=`<button class="action-btn primary" onclick="createWorkOrder('${a.id}','${a.data.maquina}','${a.title.replace(/'/g,'')}')">📋 Create Work Order</button><button class="action-btn warn" onclick="notifyTechnician('${a.id}','${a.data.maquina}')">📧 Notify Technician</button><button class="action-btn ghost" onclick="dismissAlert('${a.id}')">Dismiss</button>`;
+      else if(a.type==='inventory')actionBtns=`<button class="action-btn teal" onclick="orderInventory('${a.id}','${(a.data.nombre||'').replace(/'/g,'')}','${a.data.proveedor||''}','${a.data.email_proveedor||''}')">🛒 Order from Supplier</button><button class="action-btn ghost" onclick="dismissAlert('${a.id}')">Dismiss</button>`;
+      else actionBtns=`<button class="action-btn primary" onclick="createNCR('${a.id}','${(a.data.maquina||'').replace(/'/g,'')}','${(a.data.parte_nombre||'').replace(/'/g,'')}')">📋 Create NCR</button><button class="action-btn ghost" onclick="dismissAlert('${a.id}')">Dismiss</button>`;
+      html+=`<div class="alert-item" id="alert-item-${a.id}"><div class="alert-dot ${a.severity==='critical'?'critical':a.severity==='high'?'high':'medium'}"></div><div style="flex:1"><div class="alert-title">${a.title}</div><div class="alert-meta">${a.meta}</div><div class="alert-tags">${tagHtml}<span class="tag crit">${sevLabel}</span></div><button class="analyze-btn" id="analyze-btn-${a.id}" onclick="analyzeAlert('${a.id}',${JSON.stringify(a).replace(/"/g,'&quot;')})">🤖 Analyze with TAMM</button><div class="alert-analysis" id="analysis-${a.id}"><div class="alert-analysis-header">TAMM Analysis</div><div id="analysis-text-${a.id}"></div><div class="alert-actions" id="actions-${a.id}">${actionBtns}</div></div><div class="action-result" id="result-${a.id}"></div></div></div>`;
+    });
+    document.getElementById('alerts-body').innerHTML=html;
+  }catch(e){document.getElementById('alerts-body').innerHTML='<div class="empty">Error loading alerts</div>';}
+}
+
+// LOGS
+async function loadLogs(){
+  try{
+    const{data}=await sb.from('operator_logs').select('*').order('creado_en',{ascending:false}).limit(6);
+    if(!data||data.length===0){document.getElementById('logs-body').innerHTML='<div class="empty"><div class="empty-icon">🔧</div>No operator logs yet</div>';return;}
+    let html='';
+    data.forEach(r=>{
+      const resultado=r.resultado||'N/A';
+      const isNok=resultado.toUpperCase().includes('NOK')||resultado.toUpperCase().includes('REJECT');
+      html+=`<div class="order-item"><div><div class="order-id">${r.maquina||'N/A'} · ${r.order_number||'N/A'} · ${r.creado_en?new Date(r.creado_en).toLocaleString():'N/A'}</div><div class="order-desc">${r.parte_nombre||'Part'} · Op: ${r.operario||'N/A'} · ${r.piezas_producidas||0} pcs</div></div><span class="order-status ${isNok?'process':'done'}">${resultado}</span></div>`;
+    });
+    document.getElementById('logs-body').innerHTML=html;
+  }catch(e){document.getElementById('logs-body').innerHTML='<div class="empty">Error loading logs</div>';}
+}
+
+// ALERT ACTIONS
+async function analyzeAlert(alertId,alert){
+  const btn=document.getElementById(`analyze-btn-${alertId}`);
+  const analysisDiv=document.getElementById(`analysis-${alertId}`);
+  const analysisText=document.getElementById(`analysis-text-${alertId}`);
+  btn.classList.add('loading');btn.textContent='🤖 Analyzing...';
+  try{
+    const prompt=`Alert in Dinser Manufacturing:\nTitle: ${alert.title}\nDetails: ${alert.meta}\nSeverity: ${alert.severity}\nProvide concise analysis in 3 sentences: 1) Root cause 2) Business impact in CAD 3) Recommended action. Be direct. You are TAMM.`;
+    const res=await fetch(PROXY+'/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,system:'You are TAMM, production intelligence agent for Dinser Manufacturing. Analyze alerts directly. Never say you are an AI.',messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const analysis=data.content?.[0]?.text||'Unable to analyze.';
+    analysisText.textContent=analysis;
+    analysisDiv.classList.add('visible');
+    btn.textContent='✅ Analyzed';btn.classList.remove('loading');
+  }catch(e){btn.textContent='🤖 Analyze with TAMM';btn.classList.remove('loading');}
+}
+
+async function createWorkOrder(alertId,maquina,descripcion){
+  const btn=event.target;btn.disabled=true;btn.textContent='Creating...';
+  try{
+    const{error}=await sb.from('ordenes_trabajo').insert({tipo:'correctivo',maquina,descripcion:`[Dashboard Alert] ${descripcion}`,diagnostico_tamm:'Created from dashboard alert.',prioridad:'alta',estado:'abierta',asignado_a:'Pending'});
+    if(error)throw error;
+    showActionResult(alertId,'✅ Work order created successfully.');btn.textContent='✅ Created';
+  }catch(e){btn.disabled=false;btn.textContent='📋 Create Work Order';showActionResult(alertId,'❌ Error. Try again.');}
+}
+
+async function orderInventory(alertId,nombre,proveedor,emailProveedor){
+  const btn=event.target;btn.disabled=true;btn.textContent='Processing...';
+  try{
+    await sb.from('webhook_queue').insert({url:'https://hook.us2.make.com/4wgg1urdcqdxop349bfpdl9eep45l87j',payload:JSON.stringify({action:'order_inventory',item:nombre,proveedor,email_proveedor:emailProveedor,requested_by:CLIENT_NAME,timestamp:new Date().toISOString()}),enviado:false});
+    showActionResult(alertId,`✅ Purchase order queued for ${nombre}.`);btn.textContent='✅ Ordered';
+  }catch(e){btn.disabled=false;btn.textContent='🛒 Order from Supplier';}
+}
+
+async function notifyTechnician(alertId,maquina){
+  const btn=event.target;btn.disabled=true;btn.textContent='Notifying...';
+  try{
+    await sb.from('webhook_queue').insert({url:'https://hook.us2.make.com/lr8jj3yyz4uiq8jv0e8s7ar0iex76vdv',payload:JSON.stringify({action:'notify_technician',maquina,requested_by:CLIENT_NAME,timestamp:new Date().toISOString()}),enviado:false});
+    showActionResult(alertId,`✅ Technician notified for ${maquina}.`);btn.textContent='✅ Notified';
+  }catch(e){btn.disabled=false;btn.textContent='📧 Notify Technician';}
+}
+
+async function createNCR(alertId,maquina,parte){
+  const btn=event.target;btn.disabled=true;btn.textContent='Creating NCR...';
+  try{
+    await sb.from('ordenes_trabajo').insert({tipo:'correctivo',maquina,descripcion:`NCR: NOK parts on ${maquina} — ${parte}`,diagnostico_tamm:'NCR auto-created from dashboard.',prioridad:'alta',estado:'abierta',asignado_a:'Sarah Chen (Quality)'});
+    showActionResult(alertId,'✅ NCR created and assigned to Sarah Chen.');btn.textContent='✅ NCR Created';
+  }catch(e){btn.disabled=false;btn.textContent='📋 Create NCR';}
+}
+
+function dismissAlert(alertId){
+  const item=document.getElementById(`alert-item-${alertId}`);
+  if(item){item.style.opacity='0.4';item.style.pointerEvents='none';}
+  const result=document.getElementById(`result-${alertId}`);
+  if(result){result.textContent='Alert dismissed by '+CLIENT_NAME;result.classList.add('visible');result.style.background='rgba(107,107,130,0.1)';result.style.borderColor='rgba(107,107,130,0.2)';result.style.color='var(--muted)';}
+}
+
+function showActionResult(alertId,message){
+  const result=document.getElementById(`result-${alertId}`);
+  if(result){
+    result.textContent=message;result.classList.add('visible');
+    result.style.background=message.startsWith('✅')?'rgba(34,197,94,0.08)':'rgba(239,68,68,0.08)';
+    result.style.borderColor=message.startsWith('✅')?'rgba(34,197,94,0.2)':'rgba(239,68,68,0.2)';
+    result.style.color=message.startsWith('✅')?'var(--ok)':'var(--danger)';
+  }
+}
+
+// AUDIO CONTROLS
+let tataEnabled=true;
+let _tataAudio=null;
+
+function stopAllAudio(){
+  if(window._dashAudio){window._dashAudio.pause();window._dashAudio=null;}
+  if(_tataAudio){_tataAudio.pause();_tataAudio=null;}
+  document.querySelectorAll('.cmsg-play').forEach(b=>{b.classList.remove('playing');b.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Listen';});
+  const heroSub=document.getElementById('hero-sub');
+  if(heroSub&&heroSub.classList.contains('speaking')){
+    heroSub.classList.remove('speaking');
+    heroSub.textContent=`${COMPANY_NAME} · ${new Date().toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+  }
+}
+
+function toggleTata(){
+  tataEnabled=!tataEnabled;
+  const btn=document.getElementById('tata-toggle-btn');
+  if(tataEnabled){
+    btn.classList.remove('muted');btn.classList.add('active');
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 3a1 1 0 0 1 2 0v8a1 1 0 0 1-2 0V4zM7 11a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.93V21h-2v-3.07A7 7 0 0 1 5 11h2z"/></svg> TATA ON`;
+  }else{
+    btn.classList.remove('active');btn.classList.add('muted');
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg> TATA OFF`;
+    stopAllAudio();
+  }
+}
+
+// TATA VOICE GREETING — solo se llama una vez al cargar
+async function tataVoiceGreeting(){
+  if(!tataEnabled)return;
+  try{
+    const greeting=getGreeting();
+    const dateStr=new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'});
+    let snapshot=`Date: ${dateStr}.\n`;
+    const[oeeRes,ordRes,invRes,salesRes]=await Promise.all([
+      sb.from('oee_events').select('maquina,oee_valor,notas').order('creado_en',{ascending:false}).limit(3),
+      sb.from('ordenes_trabajo').select('maquina,tipo,estado').eq('estado','abierta').limit(5),
+      sb.from('inventory_items').select('nombre,cantidad_actual,cantidad_minima').eq('activo',true),
+      sb.from('cotizaciones').select('valor_total').eq('estado','aprobada').gte('fecha_aprobacion',new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString())
+    ]);
+    if(oeeRes.data&&oeeRes.data.length>0){const v=parseFloat(oeeRes.data[0].oee_valor)||0;snapshot+=`Latest OEE: ${v}% on ${oeeRes.data[0].maquina}. `;if(v<85)snapshot+=`Below 85% target. `;}
+    if(ordRes.data&&ordRes.data.length>0)snapshot+=`${ordRes.data.length} open work order(s). `;
+    if(invRes.data){const b=invRes.data.filter(i=>i.cantidad_actual<i.cantidad_minima);if(b.length>0)snapshot+=`${b.length} inventory alert(s): ${b.map(i=>i.nombre).slice(0,2).join(', ')}. `;}
+    if(salesRes.data){const total=salesRes.data.reduce((s,r)=>s+(parseFloat(r.valor_total)||0),0);if(total>0)snapshot+=`Sales this month: $${total.toLocaleString()} CAD. `;}
+    const tataPrompt=`You are TATA, executive intelligence agent of Orbys Manufacturing OS. Generate a professional voice greeting for ${CLIENT_NAME}, President of ${COMPANY_NAME}.\n\nReal-time data:\n${snapshot}\n\nRules:\n- Start with "${greeting}, ${CLIENT_NAME}."\n- Mention 2-3 key highlights\n- End with one specific action item\n- Maximum 4 sentences\n- Conversational, like a trusted chief of staff\n- Never say you are an AI`;
+    const res=await fetch(PROXY+'/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:200,system:'You are TATA, executive intelligence agent of Orbys Manufacturing OS. Never say you are an AI.',messages:[{role:'user',content:tataPrompt}]})});
+    const data=await res.json();
+    const tataText=data.content?.[0]?.text;
+    if(!tataText)return;
+    const heroSub=document.getElementById('hero-sub');
+    heroSub.textContent=tataText;heroSub.classList.add('speaking');
+    const audioRes=await fetch(PROXY+'/elevenlabs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:tataText})});
+    if(!audioRes.ok)return;
+    const blob=await audioRes.blob();
+    const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);
+    _tataAudio=audio;
+    window._dashAudio=audio;
+    audio.onended=()=>{
+      _tataAudio=null;window._dashAudio=null;URL.revokeObjectURL(url);
+      heroSub.classList.remove('speaking');
+      heroSub.textContent=`${COMPANY_NAME} · ${new Date().toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+    };
+    await audio.play();
+  }catch(e){console.warn('TATA greeting error:',e);}
+}
+
+// TAMM CHAT
+let chatHistory=[];
+let dashRecording=false;
+
+async function fetchContext(){
+  let ctx='';
+  try{
+    const[c,o,ot,inv,sales]=await Promise.all([
+      sb.from('conocimiento_tamm').select('area,titulo,contenido,tipo').order('area'),
+      sb.from('oee_events').select('*').order('creado_en',{ascending:false}).limit(5),
+      sb.from('ordenes_trabajo').select('*').order('creado_en',{ascending:false}).limit(6),
+      sb.from('inventory_items').select('*').eq('activo',true),
+      sb.from('cotizaciones').select('valor_total,estado,cliente,respondio').order('creado_en',{ascending:false}).limit(5)
+    ]);
+    if(c.data){ctx+='\n=== SECOND BRAIN ===\n';c.data.forEach(r=>{ctx+=`[${r.area.toUpperCase()}·${r.tipo}] ${r.titulo}: ${r.contenido}\n`;});}
+    if(o.data){ctx+='\n=== OEE ===\n';o.data.forEach(r=>{ctx+=`${r.maquina}: ${r.oee_valor}% | Disp:${r.disponibilidad}% Rend:${r.rendimiento}% Cal:${r.calidad}% | ${r.notas||''}\n`;});}
+    if(ot.data){ctx+='\n=== WORK ORDERS ===\n';ot.data.forEach(r=>{ctx+=`${r.maquina}|${r.tipo}|${r.estado}|${r.descripcion||''}\n`;});}
+    if(inv.data){ctx+='\n=== INVENTORY ===\n';inv.data.forEach(r=>{ctx+=`${r.nombre}:${r.cantidad_actual}/${r.cantidad_minima}${r.cantidad_actual<r.cantidad_minima?' ⚠️ LOW':''}\n`;});}
+    if(sales.data){ctx+='\n=== RECENT QUOTES/SALES ===\n';sales.data.forEach(r=>{ctx+=`${r.cliente}: ${r.estado} | $${r.valor_total||0} CAD | Responded: ${r.respondio}\n`;});}
+  }catch(e){}
+  return ctx;
+}
+
+const TAMM_SYSTEM=`You are TAMM, the production intelligence agent of Orbys Manufacturing OS for ${COMPANY_NAME} in Mississauga, Ontario. ${CLIENT_NAME} (President) is speaking with you. Answer directly using real-time data provided. Maximum 3 short paragraphs. Never say you are an AI. You are TAMM.`;
+
+async function chatSend(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  document.getElementById('chat-send-btn').disabled=true;
+  appendChatMsg('user',text);
+  chatHistory.push({role:'user',content:text});
+  const typId=appendChatTyping();
+  try{
+    const ctx=await fetchContext();
+    const system=TAMM_SYSTEM+(ctx?`\n\n--- REAL-TIME DATA ---\n${ctx}\n--- END ---`:'');
+    const res=await fetch(PROXY+'/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,system,messages:chatHistory})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Connection error.';
+    chatHistory.push({role:'assistant',content:reply});
+    removeTyping(typId);appendChatMsg('tamm',reply,true);
+  }catch(e){removeTyping(typId);appendChatMsg('tamm','Connection error.');}
+  document.getElementById('chat-send-btn').disabled=false;
+}
+
+function chatSendQuick(text){document.getElementById('chat-input').value=text;chatSend();}
+
+function appendChatMsg(role,text,withPlay=false){
+  const msgs=document.getElementById('chat-messages');
+  const div=document.createElement('div');div.className=`cmsg ${role==='user'?'user':'tamm-msg'}`;
+  const av=document.createElement('div');av.className=`cmsg-av ${role==='user'?'u':'t'}`;av.textContent=role==='user'?'M':'T';
+  const right=document.createElement('div');
+  const bubble=document.createElement('div');bubble.className='cmsg-bubble';bubble.textContent=text;
+  const meta=document.createElement('div');meta.className='cmsg-meta';
+  const time=document.createElement('span');time.className='cmsg-time';time.textContent=getTime();meta.appendChild(time);
+  if(withPlay){const pb=document.createElement('button');pb.className='cmsg-play';pb.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Listen';pb.onclick=()=>speakText(text,pb);meta.appendChild(pb);}
+  right.appendChild(bubble);right.appendChild(meta);div.appendChild(av);div.appendChild(right);msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function appendChatTyping(){
+  const msgs=document.getElementById('chat-messages');const id='typ-'+Date.now();
+  const div=document.createElement('div');div.className='cmsg tamm-msg';div.id=id;
+  div.innerHTML=`<div class="cmsg-av t">T</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;return id;
+}
+function removeTyping(id){const el=document.getElementById(id);if(el)el.remove();}
+
+async function speakText(text,btn){
+  if(window._dashAudio){window._dashAudio.pause();window._dashAudio=null;document.querySelectorAll('.cmsg-play').forEach(b=>{b.classList.remove('playing');b.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Listen';});return;}
+  btn.classList.add('playing');btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg> Stop';
+  try{
+    const res=await fetch(PROXY+'/elevenlabs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    if(!res.ok)throw new Error();
+    const blob=await res.blob();const url=URL.createObjectURL(blob);const audio=new Audio(url);window._dashAudio=audio;
+    audio.onended=()=>{window._dashAudio=null;URL.revokeObjectURL(url);btn.classList.remove('playing');btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Listen';};
+    await audio.play();
+  }catch(e){window._dashAudio=null;btn.classList.remove('playing');btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg> Listen';}
+}
+
+function toggleDashRecording(){
+  const btn=document.getElementById('dash-voice-btn');
+  const input=document.getElementById('chat-input');
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){alert('Use Chrome or Safari.');return;}
+  if(dashRecording){if(window._dashRec)window._dashRec.stop();dashRecording=false;btn.classList.remove('recording');return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const rec=new SR();window._dashRec=rec;
+  rec.lang='en-US';rec.continuous=false;rec.interimResults=false;
+  rec.onstart=()=>{dashRecording=true;btn.classList.add('recording');};
+  rec.onresult=(e)=>{input.value=e.results[0][0].transcript;dashRecording=false;btn.classList.remove('recording');chatSend();};
+  rec.onerror=rec.onend=()=>{dashRecording=false;btn.classList.remove('recording');};
+  rec.start();
+}
+
+function getTime(){return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+
+// INIT — llama TATA solo una vez al cargar
+window.addEventListener('load',()=>{});
+// initDashboard ya llama loadAllData, luego llamamos TATA por separado
+const _origInit=initDashboard;
+window.initDashboard=async function(){
+  const greeting=getGreeting();
+  const dateStr=new Date().toLocaleDateString('en-CA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('hero-title').innerHTML=`${greeting}, <em>${CLIENT_NAME}</em>`;
+  document.getElementById('hero-sub').textContent=`${COMPANY_NAME} · ${dateStr}`;
+  document.getElementById('top-greeting').textContent=`${greeting}, ${CLIENT_NAME}`;
+  document.getElementById('sb-date').textContent=dateStr;
+  document.getElementById('chat-welcome-time').textContent=getTime();
+  await loadAllData();
+  await tataVoiceGreeting();
+};
+</script>
+</body>
+</html>
