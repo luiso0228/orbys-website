@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbys — Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#09090e;--s1:#111118;--s2:#16161f;--bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.12);--tx:#f0eff5;--mu:#6b6b82;--mu2:#9898b0;--ac:#6c63ff;--a2:#2dd4bf;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--bd);background:rgba(9,9,14,0.9);backdrop-filter:blur(20px);position:sticky;top:0;z-index:10}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;background:linear-gradient(135deg,#fff,#a5a0ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{font-weight:400;opacity:0.4}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-tag{font-size:11px;color:var(--mu);padding:4px 10px;border:1px solid var(--bd2);border-radius:6px;font-family:'DM Mono',monospace}
+.logout-btn{padding:5px 14px;border-radius:7px;border:1px solid var(--bd2);background:transparent;color:var(--mu);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+.main{max-width:1100px;margin:0 auto;padding:36px 24px 64px}
+.hero{margin-bottom:36px}
+.hero-eyebrow{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--a2);margin-bottom:10px}
+.hero-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px}
+.hero-title em{font-style:normal;background:linear-gradient(135deg,var(--ac),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:13px;color:var(--mu2)}
+.section-label{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--mu);margin-bottom:12px;margin-top:32px;padding-bottom:8px;border-bottom:1px solid var(--bd)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:8px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin-bottom:8px}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:13px;padding:18px 20px;text-decoration:none;display:block;transition:all 0.18s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px}
+.card.purple::before{background:var(--ac)}
+.card.teal::before{background:var(--a2)}
+.card.green::before{background:var(--ok)}
+.card.amber::before{background:var(--warn)}
+.card.pink::before{background:#f472b6}
+.card.blue::before{background:#38bdf8}
+.card:hover{border-color:var(--bd2);transform:translateY(-2px)}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.card-icon{font-size:20px}
+.card-status{font-size:9px;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;font-weight:500}
+.card-status.live{background:rgba(34,197,94,0.1);color:var(--ok);border:1px solid rgba(34,197,94,0.2)}
+.card-status.partial{background:rgba(245,158,11,0.1);color:var(--warn);border:1px solid rgba(245,158,11,0.2)}
+.card-status.pending{background:rgba(107,107,130,0.15);color:var(--mu);border:1px solid rgba(107,107,130,0.2)}
+.card-status.private{background:rgba(108,99,255,0.1);color:var(--ac);border:1px solid rgba(108,99,255,0.2)}
+.card-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--tx);margin-bottom:3px}
+.card-desc{font-size:12px;color:var(--mu2);line-height:1.55}
+.card-url{font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;margin-top:8px;display:block}
+/* External links */
+.ext-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.ext-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;text-decoration:none;display:flex;align-items:center;gap:10px;transition:all 0.15s}
+.ext-card:hover{border-color:var(--bd2);background:var(--s1)}
+.ext-icon{font-size:18px;flex-shrink:0}
+.ext-name{font-size:13px;font-weight:500;color:var(--tx)}
+.ext-sub{font-size:11px;color:var(--mu);margin-top:1px}
+/* Make scenarios */
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.sc-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.sc-num{width:26px;height:26px;border-radius:7px;background:rgba(108,99,255,0.12);border:1px solid rgba(108,99,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--ac);flex-shrink:0}
+.sc-name{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.sc-desc{font-size:11px;color:var(--mu2);line-height:1.5}
+.sc-status{font-size:9px;padding:2px 7px;border-radius:100px;font-family:'DM Mono',monospace;margin-top:5px;display:inline-block}
+.sc-status.ok{background:rgba(34,197,94,0.1);color:var(--ok);border:1px solid rgba(34,197,94,0.2)}
+.sc-status.partial{background:rgba(245,158,11,0.1);color:var(--warn);border:1px solid rgba(245,158,11,0.2)}
+/* Credentials */
+.cred-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.cred-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px}
+.cred-name{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.cred-name span{font-size:16px}
+.cred-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bd);font-size:11px}
+.cred-row:last-child{border-bottom:none}
+.cred-key{color:var(--mu)}
+.cred-val{font-family:'DM Mono',monospace;color:var(--mu2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* KPIs */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:8px}
+.kpi{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;text-align:center}
+.kpi-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1}
+.kpi-val.green{color:var(--ok)}.kpi-val.amber{color:var(--warn)}.kpi-val.purple{color:var(--ac)}.kpi-val.teal{color:var(--a2)}
+.kpi-label{font-size:10px;color:var(--mu);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em}
+@media(max-width:600px){.main{padding:20px 14px 48px}nav{padding:12px 16px}.grid,.grid-2,.ext-grid,.scenario-grid,.cred-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Orbys<span>.ai</span> — Command Center</div>
+  <div class="nav-right">
+    <div class="nav-tag">Luis · Founder</div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+</nav>
+
+<div class="main">
+
+  <div class="hero">
+    <div class="hero-eyebrow">Orbys Business OS · Internal</div>
+    <h1 class="hero-title">Command Center — <em>All links & status</em></h1>
+    <p class="hero-sub">Every page, tool, and resource in one place. Private access only.</p>
+  </div>
+
+  <!-- KPIs rápidos -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val purple">6</div><div class="kpi-label">Agents Active</div></div>
+    <div class="kpi"><div class="kpi-val green">7</div><div class="kpi-label">Scenarios Live</div></div>
+    <div class="kpi"><div class="kpi-val amber">1</div><div class="kpi-label">Blocked (S8)</div></div>
+    <div class="kpi"><div class="kpi-val teal">3</div><div class="kpi-label">Products Stripe</div></div>
+    <div class="kpi"><div class="kpi-val green">✓</div><div class="kpi-label">Stripe Active</div></div>
+    <div class="kpi"><div class="kpi-val green">✓</div><div class="kpi-label">Supabase OK</div></div>
+  </div>
+
+  <!-- PÁGINAS ORBYS-AI.COM -->
+  <div class="section-label">Pages — orbys-ai.com</div>
+  <div class="grid">
+
+    <a class="card purple" href="https://orbys-ai.com" target="_blank">
+      <div class="card-top"><div class="card-icon">🌐</div><span class="card-status live">LIVE · PUBLIC</span></div>
+      <div class="card-name">Main Website</div>
+      <div class="card-desc">Landing page EN/ES/FR con agentes, pricing y demos</div>
+      <span class="card-url">orbys-ai.com</span>
+    </a>
+
+    <a class="card teal" href="https://orbys-ai.com/dashboard.html" target="_blank">
+      <div class="card-top"><div class="card-icon">📊</div><span class="card-status private">PRIVATE · LOGIN</span></div>
+      <div class="card-name">Dashboard — Dinser</div>
+      <div class="card-desc">Dashboard Mirko con KPIs, alertas, TATA voz y chat TAMM</div>
+      <span class="card-url">orbys-ai.com/dashboard.html</span>
+    </a>
+
+    <a class="card purple" href="https://orbys-ai.com/tamm.html" target="_blank">
+      <div class="card-top"><div class="card-icon">🏭</div><span class="card-status private">PRIVATE · LOGIN</span></div>
+      <div class="card-name">TAMM — Production Agent</div>
+      <div class="card-desc">Chat con voz Adam, Second Brain conectado, EN/ES</div>
+      <span class="card-url">orbys-ai.com/tamm.html</span>
+    </a>
+
+    <a class="card teal" href="https://orbys-ai.com/demo.html" target="_blank">
+      <div class="card-top"><div class="card-icon">🎯</div><span class="card-status live">LIVE · PUBLIC</span></div>
+      <div class="card-name">Demo — Dinser Manufacturing</div>
+      <div class="card-desc">Demo presencial 25 min, 7 pasos, ES/EN, datos reales</div>
+      <span class="card-url">orbys-ai.com/demo.html</span>
+    </a>
+
+    <a class="card green" href="https://orbys-ai.com/checkout.html" target="_blank">
+      <div class="card-top"><div class="card-icon">💳</div><span class="card-status live">LIVE · PUBLIC</span></div>
+      <div class="card-name">Checkout — Stripe</div>
+      <div class="card-desc">Demo gratis + Full Plan $990 + $569/mes CAD</div>
+      <span class="card-url">orbys-ai.com/checkout.html</span>
+    </a>
+
+    <a class="card amber" href="https://orbys-ai.com/operario-form.html" target="_blank">
+      <div class="card-top"><div class="card-icon">📋</div><span class="card-status private">PRIVATE · LOGIN</span></div>
+      <div class="card-name">Operario Form — AMM Quality</div>
+      <div class="card-desc">Registro de producción, piezas NOK, AMM detecta y crea NCR</div>
+      <span class="card-url">orbys-ai.com/operario-form.html</span>
+    </a>
+
+    <a class="card teal" href="https://orbys-ai.com/cotizacion-form.html" target="_blank">
+      <div class="card-top"><div class="card-icon">📊</div><span class="card-status live">LIVE · PUBLIC</span></div>
+      <div class="card-name">Cotización Form — NANA</div>
+      <div class="card-desc">Formulario público, NANA genera cotización y envía por email</div>
+      <span class="card-url">orbys-ai.com/cotizacion-form.html</span>
+    </a>
+
+    <a class="card purple" href="https://orbys-ai.com/login.html" target="_blank">
+      <div class="card-top"><div class="card-icon">🔐</div><span class="card-status live">LIVE · PUBLIC</span></div>
+      <div class="card-name">Login — Client Access</div>
+      <div class="card-desc">Supabase Auth, redirige al dashboard post-login</div>
+      <span class="card-url">orbys-ai.com/login.html</span>
+    </a>
+
+  </div>
+
+  <!-- MAKE SCENARIOS -->
+  <div class="section-label">Make.com — Active Scenarios</div>
+  <div class="scenario-grid">
+    <div class="sc-card"><div class="sc-num">S1</div><div><div class="sc-name">OEE bajo → TAMM → Orden trabajo</div><div class="sc-desc">OEE bajo threshold → TAMM analiza → orden de trabajo + email supervisor</div><span class="sc-status ok">✅ LIVE</span></div></div>
+    <div class="sc-card"><div class="sc-num">S2</div><div><div class="sc-name">NOK operario → AMM → NCR</div><div class="sc-desc">Operario registra pieza NOK → AMM crea NCR → alerta calidad</div><span class="sc-status ok">✅ LIVE</span></div></div>
+    <div class="sc-card"><div class="sc-num">S3</div><div><div class="sc-name">Cotización form → NANA → Email</div><div class="sc-desc">Formulario → NANA/Flowise → Supabase + email cliente</div><span class="sc-status ok">✅ LIVE</span></div></div>
+    <div class="sc-card"><div class="sc-num">S4</div><div><div class="sc-name">Follow-up NANA — 48h</div><div class="sc-desc">Cotizaciones sin respuesta 48h → NANA → aprobación → email cliente</div><span class="sc-status ok">✅ LIVE · 9AM diario</span></div></div>
+    <div class="sc-card"><div class="sc-num">S5</div><div><div class="sc-name">Inventario bajo → TAMM → OC</div><div class="sc-desc">Inventario bajo mínimo → TAMM genera OC → aprobación → email proveedor</div><span class="sc-status ok">✅ LIVE</span></div></div>
+    <div class="sc-card"><div class="sc-num">S7</div><div><div class="sc-name">Cartera vencida → GUMM</div><div class="sc-desc">Facturas +30 días → GUMM redacta → aprobación → email cliente</div><span class="sc-status ok">✅ LIVE</span></div></div>
+    <div class="sc-card"><div class="sc-num">S8</div><div><div class="sc-name">LinkedIn → TRPPP</div><div class="sc-desc">TRPPP genera post → aprobación → publica en página LinkedIn</div><span class="sc-status partial">⏳ BLOCKED — LinkedIn API pendiente</span></div></div>
+  </div>
+
+  <!-- HERRAMIENTAS EXTERNAS -->
+  <div class="section-label">External Tools</div>
+  <div class="ext-grid">
+    <a class="ext-card" href="https://github.com/luiso0228/orbys-website" target="_blank">
+      <div class="ext-icon">🐙</div><div><div class="ext-name">GitHub</div><div class="ext-sub">luiso0228/orbys-website</div></div>
+    </a>
+    <a class="ext-card" href="https://supabase.com/dashboard/project/qghyxindomtfpjjyvcyx" target="_blank">
+      <div class="ext-icon">🗄️</div><div><div class="ext-name">Supabase</div><div class="ext-sub">Second Brain · RLS activo</div></div>
+    </a>
+    <a class="ext-card" href="https://dash.cloudflare.com" target="_blank">
+      <div class="ext-icon">☁️</div><div><div class="ext-name">Cloudflare</div><div class="ext-sub">orbys-tamm-proxy Worker</div></div>
+    </a>
+    <a class="ext-card" href="https://us2.make.com" target="_blank">
+      <div class="ext-icon">⚙️</div><div><div class="ext-name">Make.com</div><div class="ext-sub">Core plan · zona us2</div></div>
+    </a>
+    <a class="ext-card" href="https://cloud.flowiseai.com" target="_blank">
+      <div class="ext-icon">🤖</div><div><div class="ext-name">Flowise Cloud</div><div class="ext-sub">FREE · TAMM + GUMM activos</div></div>
+    </a>
+    <a class="ext-card" href="https://elevenlabs.io" target="_blank">
+      <div class="ext-icon">🔊</div><div><div class="ext-name">ElevenLabs</div><div class="ext-sub">Plan pagado · voz Adam</div></div>
+    </a>
+    <a class="ext-card" href="https://dashboard.stripe.com" target="_blank">
+      <div class="ext-icon">💳</div><div><div class="ext-name">Stripe</div><div class="ext-sub">Sandbox · 3 productos CAD</div></div>
+    </a>
+    <a class="ext-card" href="https://www.linkedin.com/company/orbys-business-ai-os" target="_blank">
+      <div class="ext-icon">💼</div><div><div class="ext-name">LinkedIn</div><div class="ext-sub">Orbys Business OS · ID 127983953</div></div>
+    </a>
+    <a class="ext-card" href="https://console.anthropic.com" target="_blank">
+      <div class="ext-icon">🧠</div><div><div class="ext-name">Anthropic Console</div><div class="ext-sub">claude-sonnet-4-6 · API key</div></div>
+    </a>
+  </div>
+
+  <!-- CREDENCIALES RÁPIDAS -->
+  <div class="section-label">Quick Reference — IDs & Config</div>
+  <div class="cred-grid">
+
+    <div class="cred-card">
+      <div class="cred-name"><span>🗄️</span> Supabase</div>
+      <div class="cred-row"><span class="cred-key">Project URL</span><span class="cred-val">qghyxindomtfpjjyvcyx.supabase.co</span></div>
+      <div class="cred-row"><span class="cred-key">Tables</span><span class="cred-val">6 tablas activas</span></div>
+      <div class="cred-row"><span class="cred-key">Auth user</span><span class="cred-val">luismiguel.quicenocruz@gmail.com</span></div>
+      <div class="cred-row"><span class="cred-key">RLS</span><span class="cred-val">✅ Activo en todas</span></div>
+    </div>
+
+    <div class="cred-card">
+      <div class="cred-name"><span>☁️</span> Cloudflare Worker</div>
+      <div class="cred-row"><span class="cred-key">URL</span><span class="cred-val">orbys-tamm-proxy...workers.dev</span></div>
+      <div class="cred-row"><span class="cred-key">Secrets</span><span class="cred-val">CLAUDE_KEY, ELEVEN_KEY, STRIPE_KEY</span></div>
+      <div class="cred-row"><span class="cred-key">Rutas activas</span><span class="cred-val">/claude /elevenlabs /flowise /gumm /nana /trppp /inventory /linkedin /stripe/*</span></div>
+    </div>
+
+    <div class="cred-card">
+      <div class="cred-name"><span>💳</span> Stripe (Sandbox)</div>
+      <div class="cred-row"><span class="cred-key">Demo price ID</span><span class="cred-val">price_1ThKkPPdvo6AbWiQvagBUTwc</span></div>
+      <div class="cred-row"><span class="cred-key">Setup price ID</span><span class="cred-val">price_1ThKVVPdvo6AbWiQtRt5zu0x</span></div>
+      <div class="cred-row"><span class="cred-key">Monthly price ID</span><span class="cred-val">price_1ThKZNPdvo6AbWiQzOksQ9ik</span></div>
+      <div class="cred-row"><span class="cred-key">Webhook</span><span class="cred-val">memorable-bliss · Active</span></div>
+    </div>
+
+    <div class="cred-card">
+      <div class="cred-name"><span>🤖</span> Flowise</div>
+      <div class="cred-row"><span class="cred-key">Plan</span><span class="cred-val">FREE · 2 flows activos</span></div>
+      <div class="cred-row"><span class="cred-key">TAMM Chatflow</span><span class="cred-val">f540594f-10b6-49b0...</span></div>
+      <div class="cred-row"><span class="cred-key">GUMM Chatflow</span><span class="cred-val">82169d70-1f1b-4910...</span></div>
+      <div class="cred-row"><span class="cred-key">Upgrade needed</span><span class="cred-val">Starter $35/mes post-Dinser</span></div>
+    </div>
+
+    <div class="cred-card">
+      <div class="cred-name"><span>💼</span> LinkedIn</div>
+      <div class="cred-row"><span class="cred-key">Org ID</span><span class="cred-val">127983953</span></div>
+      <div class="cred-row"><span class="cred-key">App 1</span><span class="cred-val">w_member_social ✅</span></div>
+      <div class="cred-row"><span class="cred-key">App 2</span><span class="cred-val">Community Mgmt API ⏳</span></div>
+      <div class="cred-row"><span class="cred-key">S8 status</span><span class="cred-val">Bloqueado — esperando token</span></div>
+    </div>
+
+    <div class="cred-card">
+      <div class="cred-name"><span>🔊</span> ElevenLabs</div>
+      <div class="cred-row"><span class="cred-key">Voice</span><span class="cred-val">Adam</span></div>
+      <div class="cred-row"><span class="cred-key">Voice ID</span><span class="cred-val">wBXNqKUATyqu0RtYt25i</span></div>
+      <div class="cred-row"><span class="cred-key">Model</span><span class="cred-val">eleven_multilingual_v2</span></div>
+      <div class="cred-row"><span class="cred-key">Pending</span><span class="cred-val">Voces por agente (próximo)</span></div>
+    </div>
+
+  </div>
+
+  <!-- PRÓXIMOS PASOS -->
+  <div class="section-label">Pending — Next Steps</div>
+  <div class="grid-2">
+    <div class="card amber" style="cursor:default">
+      <div class="card-top"><div class="card-icon">🎯</div><span class="card-status partial">PRIORIDAD #1</span></div>
+      <div class="card-name">Demo con Mirko — Dinser Manufacturing</div>
+      <div class="card-desc">Presencial en planta Mississauga · 25 min · usar demo.html · datos reales cargados · TATA saluda con voz</div>
+    </div>
+    <div class="card purple" style="cursor:default">
+      <div class="card-top"><div class="card-icon">⏳</div><span class="card-status pending">WAITING</span></div>
+      <div class="card-name">S8 LinkedIn — Community Management API</div>
+      <div class="card-desc">Solicitud enviada a luis.cruz@easy-oee.com · Esperando aprobación LinkedIn · días/semanas</div>
+    </div>
+    <div class="card teal" style="cursor:default">
+      <div class="card-top"><div class="card-icon">🔊</div><span class="card-status pending">POST-DINSER</span></div>
+      <div class="card-name">Voces por agente — ElevenLabs</div>
+      <div class="card-desc">Mapa de voces en Worker · agents.html hub · NANA voz femenina · GUMM voz formal · TATA voz ejecutiva</div>
+    </div>
+    <div class="card green" style="cursor:default">
+      <div class="card-top"><div class="card-icon">💳</div><span class="card-status pending">POST-DINSER</span></div>
+      <div class="card-name">Stripe — Pasar a Live Mode</div>
+      <div class="card-desc">Completar perfil negocio · cambiar keys test→live · recrear productos en live · primer cobro real</div>
+    </div>
+    <div class="card purple" style="cursor:default">
+      <div class="card-top"><div class="card-icon">🤖</div><span class="card-status pending">POST-DINSER</span></div>
+      <div class="card-name">Flowise Starter — 10 agentes restantes</div>
+      <div class="card-desc">$35/mes · construir WAWA, COCO, MAMA, TATA dashboard, UMUM, WRAWRA, ARCHI + rutas Worker</div>
+    </div>
+    <div class="card teal" style="cursor:default">
+      <div class="card-top"><div class="card-icon">🏢</div><span class="card-status pending">ESCALA</span></div>
+      <div class="card-name">Multi-tenant — Supabase por cliente</div>
+      <div class="card-desc">Cada cliente con su propio Second Brain · onboarding kit automatizado · tabla alertas centralizada</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://qghyxindomtfpjjyvcyx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFnaHl4aW5kb210ZnBqanl2Y3l4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Nzk5OTYsImV4cCI6MjA5NTU1NTk5Nn0.hvc2AyylqmLNVF3rsrvgA8-GtjCpCfvUPztbLTgwTTo';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    window.location.href = '/login.html?redirect=links.html';
+  }
+})();
+
+async function doLogout() {
+  await sb.auth.signOut();
+  window.location.href = '/login.html';
+}
+</script>
+</body>
+</html>
